@@ -1,0 +1,154 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Deny all by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isUser(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && (
+        request.auth.token.role == 'admin' || 
+        request.auth.token.admin == true
+      );
+    }
+
+    function isInstructor() {
+      return isAuthenticated() && (
+        request.auth.token.role == 'instructor' || 
+        isAdmin()
+      );
+    }
+
+    function isCourseInstructor(courseId) {
+      return isInstructor() && (
+        request.auth.uid in get(/databases/$(database)/documents/courses/$(courseId)).data.instructorIds ||
+        isAdmin()
+      );
+    }
+
+    function isEnrolledStudent(courseId) {
+      return isAuthenticated() && 
+        exists(/databases/$(database)/documents/courses/$(courseId)/members/$(request.auth.uid));
+    }
+
+    // Users Collection
+    match /users/{userId} {
+      // Anyone authenticated can read basic user profile (display name, email)
+      allow read: if isAuthenticated();
+      // User can create their own profile as a student
+      allow create: if isUser(userId) && request.resource.data.role == 'student';
+      // User can update their own profile, but CANNOT change their role
+      allow update: if isUser(userId) && request.resource.data.role == resource.data.role;
+      // Admin has full control
+      allow write: if isAdmin();
+    }
+
+    // Courses Collection
+    match /courses/{courseId} {
+      // Authenticated users can view course meta to browse/join
+      allow read: if isAuthenticated();
+      // Only instructors or admins can create/update courses
+      allow create, update: if isInstructor();
+      allow delete: if isAdmin();
+
+      // Course Members subcollection
+      match /members/{memberId} {
+        allow read: if isAuthenticated();
+        // A student can add themselves (join course)
+        allow create: if isUser(memberId);
+        allow update, delete: if isCourseInstructor(courseId) || isAdmin();
+      }
+
+      // Sections subcollection
+      match /sections/{sectionId} {
+        allow read: if isAuthenticated();
+        allow write: if isCourseInstructor(courseId) || isAdmin();
+      }
+    }
+
+    // Question Banks Collection (Instructors & Admin only)
+    match /questionBanks/{bankId} {
+      allow read, write: if isInstructor();
+
+      match /questions/{questionId} {
+        allow read, write: if isInstructor();
+      }
+    }
+
+    // Quizzes Collection
+    match /quizzes/{quizId} {
+      // Students enrolled in the course or instructors of the course can view published quizzes
+      allow read: if isAuthenticated() && (
+        resource.data.isPublished == true || 
+        isCourseInstructor(resource.data.courseId)
+      );
+      allow write: if isInstructor();
+
+      // Quiz Versions (Immutable frozen snapshots)
+      match /versions/{versionId} {
+        allow read: if isAuthenticated();
+        allow write: if isInstructor();
+      }
+    }
+
+    // Attempts Collection
+    match /attempts/{attemptId} {
+      // Students can read their own attempts; instructors can view attempts for their courses
+      allow read: if isAuthenticated() && (
+        isUser(resource.data.userId) || 
+        isCourseInstructor(resource.data.courseId) ||
+        isAdmin()
+      );
+
+      // Student can create their own attempt with initial status 'in-progress'
+      allow create: if isAuthenticated() && 
+        isUser(request.resource.data.userId) &&
+        request.resource.data.status == 'in-progress';
+
+      // Student can update during in-progress (e.g. marking submitted), but cannot modify once submitted
+      allow update: if isAuthenticated() && (
+        (isUser(resource.data.userId) && resource.data.status == 'in-progress') ||
+        isCourseInstructor(resource.data.courseId) ||
+        isAdmin()
+      );
+
+      allow delete: if isAdmin();
+
+      // Responses subcollection inside an attempt
+      match /responses/{questionId} {
+        allow read: if isAuthenticated() && (
+          isUser(get(/databases/$(database)/documents/attempts/$(attemptId)).data.userId) ||
+          isCourseInstructor(get(/databases/$(database)/documents/attempts/$(attemptId)).data.courseId) ||
+          isAdmin()
+        );
+
+        // Autosave allowed while parent attempt is in-progress
+        allow write: if isAuthenticated() && 
+          isUser(get(/databases/$(database)/documents/attempts/$(attemptId)).data.userId) &&
+          get(/databases/$(database)/documents/attempts/$(attemptId)).data.status == 'in-progress';
+      }
+    }
+
+    // Scenario Templates
+    match /scenarioTemplates/{templateId} {
+      allow read: if isAuthenticated();
+      allow write: if isInstructor();
+    }
+
+    // Audit Logs
+    match /auditLogs/{logId} {
+      allow read, write: if isAdmin();
+    }
+  }
+}

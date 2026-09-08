@@ -1,0 +1,25 @@
+kind: AppHostingYaml
+version: v1alpha
+
+runConfig:
+  minInstances: 0
+  maxInstances: 10
+  concurrency: 80
+  cpu: 1
+  memoryMiB: 1024
+
+env:
+  - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+    value: os-assessment-platform
+  - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+    value: os-assessment-platform.firebaseapp.com
+  - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+    value: os-assessment-platform.appspot.com
+  - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+    value: "123456789012"
+  - variable: NEXT_PUBLIC_FIREBASE_APP_ID
+    value: "1:123456789012:web:abcdef123456"
+  - variable: NEXT_PUBLIC_USE_FIREBASE_EMULATORS
+    value: "false"
+  - variable: NEXT_PUBLIC_DEMO_MODE
+    value: "false"

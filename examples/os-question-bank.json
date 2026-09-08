@@ -1,0 +1,218 @@
+{
+  "title": "CSE-307 Operating Systems Master Question Bank",
+  "description": "Comprehensive question bank covering Virtual Memory, Address Translation, TLB, Page Faults, and Disk Scheduling.",
+  "courseCode": "CSE-307",
+  "topic": "Operating Systems",
+  "questions": [
+    {
+      "id": "q-bank-01",
+      "type": "mcq-single",
+      "title": "Virtual Memory Paging Purpose",
+      "prompt": "What is the primary advantage of virtual memory paging compared to simple contiguous memory allocation?",
+      "topic": "Virtual Memory",
+      "subtopic": "Paging Basics",
+      "difficulty": "easy",
+      "tags": ["paging", "memory-management", "concepts"],
+      "points": 2,
+      "explanation": "Paging divides physical memory into fixed-size frames and logical memory into pages, completely eliminating external fragmentation and allowing non-contiguous allocation.",
+      "shuffleOptions": true,
+      "options": [
+        { "id": "opt-1", "text": "It completely eliminates internal fragmentation in all memory allocations", "isCorrect": false },
+        { "id": "opt-2", "text": "It allows a process's physical address space to be non-contiguous, eliminating external fragmentation", "isCorrect": true },
+        { "id": "opt-3", "text": "It avoids having to load any page tables into physical memory", "isCorrect": false },
+        { "id": "opt-4", "text": "It makes disk access faster than RAM access", "isCorrect": false }
+      ]
+    },
+    {
+      "id": "q-bank-02",
+      "type": "mcq-multi",
+      "title": "Paging vs Segmentation Characteristics",
+      "prompt": "Which of the following statements correctly describe Paging? (Select all that apply)",
+      "topic": "Virtual Memory",
+      "subtopic": "Architectural Design",
+      "difficulty": "medium",
+      "tags": ["paging", "segmentation"],
+      "points": 3,
+      "explanation": "Paging uses fixed-sized blocks determined by hardware, invisible to the programmer, and eliminates external fragmentation while suffering from slight internal fragmentation.",
+      "shuffleOptions": true,
+      "allowPartialCredit": true,
+      "options": [
+        { "id": "opt-2a", "text": "Page sizes are fixed by hardware architecture (typically powers of 2)", "isCorrect": true },
+        { "id": "opt-2b", "text": "The programmer is explicitly responsible for defining page boundaries", "isCorrect": false },
+        { "id": "opt-2c", "text": "Paging suffers from internal fragmentation within the final allocated page", "isCorrect": true },
+        { "id": "opt-2d", "text": "Paging produces severe external fragmentation requiring periodic compaction", "isCorrect": false }
+      ]
+    },
+    {
+      "id": "q-bank-03",
+      "type": "numeric",
+      "title": "Effective Memory Access Time with TLB",
+      "prompt": "Assume memory access takes 100 ns and TLB access takes 20 ns. If the TLB hit ratio is 80% (0.80) and a page fault does not occur, what is the Effective Access Time (EAT) in nanoseconds?",
+      "topic": "Virtual Memory",
+      "subtopic": "TLB Performance",
+      "difficulty": "medium",
+      "tags": ["tlb", "eat", "calculation"],
+      "points": 4,
+      "tolerance": 0.5,
+      "correctValue": 140,
+      "unit": "ns",
+      "explanation": "EAT = Hit_Ratio * (TLB_time + Mem_time) + Miss_Ratio * (TLB_time + 2 * Mem_time) = 0.8 * (20 + 100) + 0.2 * (20 + 200) = 0.8 * 120 + 0.2 * 220 = 96 + 44 = 140 ns."
+    },
+    {
+      "id": "q-bank-04",
+      "type": "mcq-single",
+      "title": "Translation Lookaside Buffer (TLB) Function",
+      "prompt": "What is the primary role of the Translation Lookaside Buffer (TLB) in modern computer systems?",
+      "topic": "Virtual Memory",
+      "subtopic": "TLB",
+      "difficulty": "easy",
+      "tags": ["tlb", "hardware", "caching"],
+      "points": 2,
+      "explanation": "The TLB is a fast, hardware associative cache that stores recent virtual-to-physical page translations, avoiding an extra memory access to the page table.",
+      "shuffleOptions": true,
+      "options": [
+        { "id": "opt-4a", "text": "A hardware cache storing recently accessed page-table entries to speed up address translation", "isCorrect": true },
+        { "id": "opt-4b", "text": "A disk buffer storing swap space pages awaiting dirty writeback", "isCorrect": false },
+        { "id": "opt-4c", "text": "A software table managed by the scheduler to track thread states", "isCorrect": false },
+        { "id": "opt-4d", "text": "An execution pipeline cache storing decoded machine instructions", "isCorrect": false }
+      ]
+    },
+    {
+      "id": "q-bank-05",
+      "type": "mcq-single",
+      "title": "Page Fault Exception Handling",
+      "prompt": "What sequence of events is initiated by the CPU when a requested page's Valid/Invalid bit is set to 'Invalid'?",
+      "topic": "Virtual Memory",
+      "subtopic": "Page Faults",
+      "difficulty": "medium",
+      "tags": ["page-fault", "interrupts", "trap"],
+      "points": 3,
+      "explanation": "An invalid page reference triggers a hardware trap/interrupt to the operating system kernel (page fault), which suspends the process, issues disk I/O to fetch the page, updates the page table, and restarts the faulting instruction.",
+      "shuffleOptions": true,
+      "options": [
+        { "id": "opt-5a", "text": "Hardware page fault trap to OS -> Process saved -> Disk I/O fetches page -> Frame allocated -> Page table updated -> Restart instruction", "isCorrect": true },
+        { "id": "opt-5b", "text": "The CPU immediately halts execution and shuts down physical memory", "isCorrect": false },
+        { "id": "opt-5c", "text": "The MMU ignores the address and returns byte 0x00 to the accumulator", "isCorrect": false },
+        { "id": "opt-5d", "text": "The process is immediately terminated without checking backing store", "isCorrect": false }
+      ]
+    },
+    {
+      "id": "q-bank-06",
+      "type": "scenario",
+      "title": "Paging Address Translation Visual Simulation",
+      "prompt": "Use the interactive MMU and Page Table visualization to translate the requested logical address into its physical RAM address.",
+      "topic": "Virtual Memory",
+      "subtopic": "Address Translation",
+      "difficulty": "hard",
+      "tags": ["paging", "mmu", "scenario", "interactive"],
+      "points": 5,
+      "scenarioType": "paging-translation",
+      "scenarioConfig": {
+        "processName": "P1",
+        "processSize": 4,
+        "pageSize": 2,
+        "physicalMemorySize": 16,
+        "frameSize": 2,
+        "pageTable": { "0": 2, "1": 4 },
+        "targetLogicalAddress": 3
+      },
+      "explanation": "Address 3 decimal = 11 binary. Page = 1, Offset = 1. Page Table entry for Page 1 points to Frame 4 (100 binary). Combining Frame 4 and Offset 1 yields 1001 binary = 9 decimal."
+    },
+    {
+      "id": "q-bank-07",
+      "type": "scenario",
+      "title": "Disk Scheduling: Head Movement Calculation",
+      "prompt": "Evaluate the disk scheduling algorithm for the specified request queue and calculate the total cylinder head displacement.",
+      "topic": "I/O Systems",
+      "subtopic": "Disk Scheduling",
+      "difficulty": "hard",
+      "tags": ["disk-scheduling", "fcfs", "sstf", "scenario", "interactive"],
+      "points": 5,
+      "scenarioType": "disk-scheduling",
+      "scenarioConfig": {
+        "cylinderRange": [0, 199],
+        "initialHead": 53,
+        "requestQueue": [98, 183, 37, 122, 14, 124, 65, 67],
+        "algorithm": "FCFS",
+        "direction": "UP"
+      },
+      "explanation": "Under FCFS with head starting at 53: 53->98->183->37->122->14->124->65->67 results in total head movement: |98-53| + |183-98| + |37-183| + |122-37| + |14-122| + |124-14| + |65-124| + |67-65| = 45 + 85 + 146 + 85 + 108 + 110 + 59 + 2 = 640 cylinders."
+    },
+    {
+      "id": "q-bank-08",
+      "type": "true-false",
+      "title": "Belady's Anomaly in FIFO Page Replacement",
+      "prompt": "Belady's Anomaly states that under FIFO page replacement, increasing the number of allocated page frames can sometimes lead to an increase in the number of page faults.",
+      "topic": "Virtual Memory",
+      "subtopic": "Page Replacement",
+      "difficulty": "easy",
+      "tags": ["belady", "fifo", "page-replacement"],
+      "points": 2,
+      "correctAnswer": true,
+      "explanation": "True. Belady's anomaly occurs in FIFO because FIFO is not a stack-based algorithm like LRU or Optimal."
+    },
+    {
+      "id": "q-bank-09",
+      "type": "ordering",
+      "title": "Handling a Page Fault Sequence",
+      "prompt": "Order the following steps taken by the OS and hardware when handling a page fault, from first (top) to last (bottom):",
+      "topic": "Virtual Memory",
+      "subtopic": "Page Faults",
+      "difficulty": "hard",
+      "tags": ["page-fault", "sequencing"],
+      "points": 4,
+      "explanation": "Correct order: 1. CPU encounters invalid bit & traps to OS; 2. OS saves process registers; 3. OS locates page on disk; 4. OS reads page into free physical frame; 5. OS updates page table to valid; 6. CPU restarts instruction.",
+      "items": [
+        { "id": "step-1", "text": "CPU attempts memory access and triggers hardware trap to OS", "correctOrder": 0 },
+        { "id": "step-2", "text": "OS saves CPU registers and process state", "correctOrder": 1 },
+        { "id": "step-3", "text": "OS checks internal table to verify valid reference and locates page on backing store", "correctOrder": 2 },
+        { "id": "step-4", "text": "OS issues I/O read to transfer page into an available physical frame", "correctOrder": 3 },
+        { "id": "step-5", "text": "OS modifies page table entry to valid and sets frame number", "correctOrder": 4 },
+        { "id": "step-6", "text": "CPU restarts the trapped instruction", "correctOrder": 5 }
+      ]
+    },
+    {
+      "id": "q-bank-10",
+      "type": "matching",
+      "title": "Contiguous Memory Allocation Strategies",
+      "prompt": "Match each contiguous memory allocation algorithm with its definition:",
+      "topic": "Memory Management",
+      "subtopic": "Allocation Algorithms",
+      "difficulty": "medium",
+      "tags": ["allocation", "first-fit", "best-fit", "worst-fit"],
+      "points": 3,
+      "explanation": "First-Fit allocates the first hole that is big enough; Best-Fit allocates the smallest hole that is big enough; Worst-Fit allocates the largest available hole.",
+      "pairs": [
+        { "id": "pair-1", "left": "First-Fit", "right": "Allocates the first hole in memory that is large enough" },
+        { "id": "pair-2", "left": "Best-Fit", "right": "Allocates the smallest hole that is large enough, minimizing leftover hole size" },
+        { "id": "pair-3", "left": "Worst-Fit", "right": "Allocates the largest hole available, leaving the largest remaining fragment" }
+      ]
+    },
+    {
+      "id": "q-bank-11",
+      "type": "confidence",
+      "title": "Confidence Rating",
+      "prompt": "How confident do you feel in your understanding of Virtual Memory address translation?",
+      "topic": "Metacognition",
+      "difficulty": "easy",
+      "tags": ["feedback", "confidence"],
+      "points": 1,
+      "minRating": 1,
+      "maxRating": 5,
+      "explanation": "Confidence data helps your instructor identify topics that need reinforcement."
+    },
+    {
+      "id": "q-bank-12",
+      "type": "feedback",
+      "title": "Topic Reflection & Feedback",
+      "prompt": "What aspect of Paging or Disk Scheduling was most challenging or confusing?",
+      "topic": "Metacognition",
+      "difficulty": "easy",
+      "tags": ["feedback", "qualitative"],
+      "points": 1,
+      "placeholder": "Briefly share your thoughts...",
+      "maxLength": 500,
+      "explanation": "Student feedback is used to refine lecture demonstrations and tutorial problems."
+    }
+  ]
+}
