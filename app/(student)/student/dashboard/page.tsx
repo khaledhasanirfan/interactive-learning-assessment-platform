@@ -20,7 +20,8 @@ import {
   BookOpen, 
   History, 
   Award,
-  AlertCircle
+  AlertCircle,
+  RotateCcw
 } from 'lucide-react';
 
 export default function StudentDashboard() {
@@ -36,6 +37,8 @@ export default function StudentDashboard() {
   const [feedbackSuccess, setFeedbackSuccess] = useState('');
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
+  const studentIdentifier = profile?.email?.split('@')[0] || profile?.id || '202014019';
+
   useEffect(() => {
     async function loadData() {
       setLoading(true);
@@ -43,16 +46,14 @@ export default function StudentDashboard() {
         const quizList = await Repository.getQuizzes();
         setQuizzes(quizList);
 
-        if (profile?.id) {
-          const studentAttempts = await Repository.getAttemptsByUser(profile.id);
-          setAttempts(studentAttempts);
-        }
+        const studentAttempts = await Repository.getAttemptsByUser(studentIdentifier);
+        setAttempts(studentAttempts);
       } finally {
         setLoading(false);
       }
     }
     loadData();
-  }, [profile?.id]);
+  }, [studentIdentifier]);
 
   const handleFeedbackSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,7 +66,7 @@ export default function StudentDashboard() {
     setFeedbackSubmitting(true);
     const feedbackItem: UserFeedback = {
       id: `fb-${Date.now()}`,
-      studentId: profile?.email?.split('@')[0] || profile?.id || '202014019',
+      studentId: studentIdentifier,
       studentName: profile?.displayName || 'Student',
       category: feedbackCategory,
       message: feedbackMsg.trim(),
@@ -85,24 +86,19 @@ export default function StudentDashboard() {
     }, 5000);
   };
 
-  // Split into active quizzes vs completed attempts
-  const completedQuizIds = new Set(attempts.filter(a => a.status === 'submitted' || a.status === 'timed-out').map(a => a.quizId));
-  const activeQuizzes = quizzes.filter(q => !completedQuizIds.has(q.id));
-  const completedAttempts = attempts.filter(a => a.status === 'submitted' || a.status === 'timed-out');
-
   return (
     <div className="flex-1 w-full max-w-[1600px] mx-auto px-4 sm:px-8 xl:px-12 py-6 sm:py-8 space-y-8">
       {/* Student Welcome Card (Mint Theme) */}
       <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 rounded-3xl p-6 sm:p-8 text-white shadow-md relative overflow-hidden flex flex-col sm:flex-row items-center justify-between gap-6">
         <div className="z-10 space-y-2 text-center sm:text-left">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 text-xs font-bold">
-            <span>👋 Hello, {profile?.displayName || 'Student'}</span>
+            <span>👋 Hello, {profile?.displayName || 'Student'} ({studentIdentifier})</span>
           </div>
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight">
             Ready to Master Operating Systems? 🚀
           </h1>
           <p className="text-xs sm:text-sm text-emerald-100 max-w-lg font-medium">
-            Complete your assigned live class tasks, review detailed justifications of past answers, or submit direct feedback below.
+            Take your assigned live tasks, re-attempt anytime to master core concepts, review past attempt logs, or send direct feedback below.
           </p>
         </div>
 
@@ -119,7 +115,7 @@ export default function StudentDashboard() {
         </div>
       </div>
 
-      {/* SECTION 1: ACTIVE QUIZZES / TASKS ASSIGNED */}
+      {/* SECTION 1: ASSIGNED ASSESSMENTS (ALWAYS ACCESSIBLE TO START / RE-ATTEMPT) */}
       <div>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
@@ -128,150 +124,218 @@ export default function StudentDashboard() {
             </span>
             <div>
               <h2 className="text-lg sm:text-xl font-bold text-slate-900">
-                Active Assigned Quizzes &amp; Tasks
+                Assigned Quizzes &amp; Live Tasks
               </h2>
-              <p className="text-xs text-slate-500">Live assessments assigned for your class</p>
+              <p className="text-xs text-slate-500">Always accessible &bull; Attempt count tracked automatically</p>
             </div>
           </div>
           <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
-            {activeQuizzes.length} Available
+            {quizzes.length} Available
           </span>
         </div>
 
-        {activeQuizzes.length === 0 ? (
+        {quizzes.length === 0 ? (
           <div className="bg-white/90 rounded-3xl border border-emerald-100 p-8 text-center text-slate-500 shadow-xs">
             <CheckCircle className="w-10 h-10 text-emerald-500 mx-auto mb-2 opacity-80" />
-            <h3 className="text-sm font-bold text-slate-800">You&apos;re all caught up!</h3>
-            <p className="text-xs text-slate-400 mt-1">No pending quizzes at this moment. Review your completed sessions below.</p>
+            <h3 className="text-sm font-bold text-slate-800">No active tasks right now</h3>
+            <p className="text-xs text-slate-400 mt-1">Instructor will post new live assignments shortly.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {activeQuizzes.map((quiz) => (
-              <div 
-                key={quiz.id}
-                className="bg-white/95 backdrop-blur-md rounded-3xl border border-emerald-100 p-6 shadow-sm hover:shadow-md hover:border-emerald-300 transition-all hover:scale-[1.01] flex flex-col justify-between"
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
-                      Live Class Task
-                    </span>
-                    <span className="flex items-center gap-1 text-xs font-semibold text-slate-500">
-                      <Clock className="w-3.5 h-3.5 text-emerald-600" />
-                      {quiz.timeLimitMinutes || 25} mins
-                    </span>
+            {quizzes.map((quiz) => {
+              const quizAttempts = attempts.filter(a => a.quizId === quiz.id);
+              const attemptCount = quizAttempts.length;
+              const bestScore = attemptCount > 0 
+                ? Math.max(...quizAttempts.map(a => a.score ?? 0)) 
+                : null;
+
+              return (
+                <div 
+                  key={quiz.id}
+                  className="bg-white/95 backdrop-blur-md rounded-3xl border border-emerald-100 p-6 shadow-sm hover:shadow-md hover:border-emerald-300 transition-all hover:scale-[1.01] flex flex-col justify-between space-y-4"
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
+                        Live Class Task
+                      </span>
+                      <span className="flex items-center gap-1 text-xs font-semibold text-slate-500">
+                        <Clock className="w-3.5 h-3.5 text-emerald-600" />
+                        {quiz.timeLimitMinutes} mins
+                      </span>
+                    </div>
+
+                    <h3 className="text-base font-bold text-slate-900 leading-snug mb-1">
+                      {quiz.title}
+                    </h3>
+                    <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed mb-3">
+                      {quiz.description}
+                    </p>
+
+                    {/* Attempt Log Status Badge */}
+                    <div className="pt-3 border-t border-emerald-50/80 flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${
+                          attemptCount > 0
+                            ? 'bg-teal-50 text-teal-800 border-teal-200'
+                            : 'bg-slate-50 text-slate-600 border-slate-200'
+                        }`}>
+                          Attempted: {attemptCount} {attemptCount === 1 ? 'time' : 'times'}
+                        </span>
+                      </div>
+
+                      {bestScore !== null && (
+                        <span className="text-xs font-extrabold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                          Best: {bestScore} pts
+                        </span>
+                      )}
+                    </div>
                   </div>
 
-                  <h3 className="text-base font-bold text-slate-900 mb-1.5 leading-snug">
-                    {quiz.title}
-                  </h3>
-                  <p className="text-xs text-slate-500 line-clamp-2 mb-4 leading-relaxed">
-                    {quiz.description || 'Master key Operating Systems mechanisms with interactive, textual, and MCQ questions.'}
-                  </p>
+                  {/* Always Can Start / Re-Attempt Button */}
+                  <div className="pt-2">
+                    <Link href={`/student/quizzes/${quiz.id}/attempt/new`} className="w-full block">
+                      <Button className="w-full rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-xs py-3 shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-2 group">
+                        {attemptCount === 0 ? (
+                          <>
+                            <Play className="w-3.5 h-3.5 fill-white" />
+                            <span>Start Assessment</span>
+                          </>
+                        ) : (
+                          <>
+                            <RotateCcw className="w-3.5 h-3.5" />
+                            <span>Re-attempt Assessment</span>
+                          </>
+                        )}
+                        <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
-
-                <Link href={`/student/quizzes/${quiz.id}/attempt/new`}>
-                  <Button 
-                    className="w-full rounded-full bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-xs sm:text-sm py-2.5 shadow-sm transition-all flex items-center justify-center gap-2 group"
-                  >
-                    <span>Start Assessment</span>
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                  </Button>
-                </Link>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
 
-      {/* SECTION 2: PAST SESSIONS DONE */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
+      {/* SECTION 2: MY ASSESSMENT SESSIONS & ACTIVITY LOG */}
+      <div className="bg-white/95 backdrop-blur-md rounded-3xl border border-emerald-100 p-6 sm:p-8 shadow-sm space-y-5">
+        <div className="flex items-center justify-between border-b border-emerald-50 pb-3">
           <div className="flex items-center gap-2">
             <span className="p-2 rounded-xl bg-teal-50 text-teal-700 border border-teal-200">
               <History className="w-5 h-5" />
             </span>
             <div>
-              <h2 className="text-lg sm:text-xl font-bold text-slate-900">
-                Completed Assessment Sessions
+              <h2 className="text-base sm:text-lg font-bold text-slate-900">
+                My Past Sessions &amp; Submissions Log
               </h2>
-              <p className="text-xs text-slate-500">Your historical score records and performance</p>
+              <p className="text-xs text-slate-500">Track your completed sessions, scores, and review full question justifications</p>
             </div>
           </div>
           <span className="text-xs font-bold px-3 py-1 rounded-full bg-teal-50 text-teal-800 border border-teal-200">
-            {completedAttempts.length} Completed
+            {attempts.length} Total Attempts
           </span>
         </div>
 
-        {completedAttempts.length === 0 ? (
-          <div className="bg-white/80 rounded-3xl border border-emerald-100/80 p-6 text-center text-slate-500 shadow-xs">
-            <p className="text-xs">No completed sessions yet. Start an active quiz above to build your progress history!</p>
+        {attempts.length === 0 ? (
+          <div className="text-center py-10 text-slate-400">
+            <History className="w-10 h-10 mx-auto mb-2 opacity-30 text-teal-600" />
+            <p className="text-xs font-semibold text-slate-600">No assessment attempts recorded yet.</p>
+            <p className="text-[11px] text-slate-400">When you complete an assessment, your scores and question explanations will appear here.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {completedAttempts.map((att) => (
-              <div 
-                key={att.id}
-                className="bg-white/95 rounded-3xl border border-emerald-100 p-5 shadow-xs flex items-center justify-between hover:border-emerald-200 transition-all"
-              >
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                    <span className="text-xs font-bold text-slate-700">Completed Session</span>
-                  </div>
-                  <h4 className="text-sm font-bold text-slate-900">
-                    {quizzes.find(q => q.id === att.quizId)?.title || 'Operating Systems Assessment'}
-                  </h4>
-                  <p className="text-[11px] text-slate-400">
-                    {new Date(att.submittedAt || att.startedAt).toLocaleDateString()}
-                  </p>
-                </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="border-b border-emerald-100 text-slate-400 font-bold uppercase tracking-wider text-[11px]">
+                  <th className="py-3 px-4">Session</th>
+                  <th className="py-3 px-4">Assessment Title</th>
+                  <th className="py-3 px-4">Score Earned</th>
+                  <th className="py-3 px-4">Percentage</th>
+                  <th className="py-3 px-4">Date &amp; Time</th>
+                  <th className="py-3 px-4 text-right">Review Answers</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {attempts.map((att, idx) => {
+                  const score = att.score ?? 0;
+                  const max = att.maxScore ?? 15;
+                  const pct = att.percentage ?? (max > 0 ? Math.round((score / max) * 100) : 0);
+                  const quizItem = quizzes.find(q => q.id === att.quizId);
 
-                <div className="text-right">
-                  <div className="text-lg font-extrabold text-emerald-800">
-                    {att.percentage !== undefined ? `${Math.round(att.percentage)}%` : (att.score !== undefined ? `${att.score}/${att.maxScore}` : 'Graded')}
-                  </div>
-                  <span className="text-[10px] font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                    Recorded
-                  </span>
-                </div>
-              </div>
-            ))}
+                  return (
+                    <tr key={att.id} className="hover:bg-emerald-50/40 transition-colors">
+                      <td className="py-3 px-4 font-mono font-bold text-slate-700">
+                        Session #{attempts.length - idx}
+                      </td>
+                      <td className="py-3 px-4 font-semibold text-slate-900 max-w-xs truncate">
+                        {quizItem?.title || att.quizId}
+                      </td>
+                      <td className="py-3 px-4 font-bold font-mono text-emerald-700">
+                        {score} / {max} pts
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className={`font-bold px-2 py-0.5 rounded-full text-[11px] ${
+                          pct >= 80 
+                            ? 'bg-emerald-100 text-emerald-800' 
+                            : pct >= 50 
+                            ? 'bg-amber-100 text-amber-800' 
+                            : 'bg-rose-100 text-rose-800'
+                        }`}>
+                          {pct}%
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-slate-500">
+                        {new Date(att.submittedAt || att.startedAt).toLocaleString()}
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        <Link href={`/student/quizzes/${att.quizId}/attempt/${att.id}`}>
+                          <Button variant="outline" size="sm" className="h-7 text-xs font-bold border-emerald-200 text-emerald-800 hover:bg-emerald-50">
+                            Review Answers &amp; Explanations
+                          </Button>
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
 
-      {/* SECTION 3: DEDICATED PERSISTENT FEEDBACK / COMPLAIN INPUT */}
-      <div className="bg-white/95 backdrop-blur-md rounded-3xl border border-emerald-200/90 p-6 sm:p-8 shadow-sm">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700">
+      {/* SECTION 3: DEDICATED STUDENT FEEDBACK & COMPLAINTS */}
+      <div className="bg-white/95 backdrop-blur-md rounded-3xl border border-emerald-100 p-6 sm:p-8 shadow-sm space-y-4">
+        <div className="flex items-center gap-2">
+          <div className="p-2 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200">
             <MessageSquare className="w-5 h-5" />
           </div>
           <div>
             <h2 className="text-base sm:text-lg font-bold text-slate-900">
-              Help Us Improve KernelBuddy 💡
+              Have Feedback, an Issue, or a Feature Suggestion?
             </h2>
             <p className="text-xs text-slate-500">
-              Share your user experience, complaints, issues you are facing, or features you want. Submissions go straight to Admin Khaled!
+              Submit your direct comments to Admin Khaled. Your feedback will appear live on the Admin Dashboard.
             </p>
           </div>
         </div>
 
         {feedbackSuccess && (
-          <div className="mb-4 p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2 shadow-xs animate-pop-success">
-            <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+          <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs sm:text-sm text-emerald-800 font-semibold flex items-center gap-2 animate-pop-success">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
             <span>{feedbackSuccess}</span>
           </div>
         )}
 
         <form onSubmit={handleFeedbackSubmit} className="space-y-4">
-          {/* Category Selector Pills */}
-          <div className="flex flex-wrap gap-2">
+          {/* Category Selector */}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-bold text-slate-700 mr-2">Category:</span>
             {[
-              { id: 'feedback', label: '✨ General Feedback' },
-              { id: 'feature_request', label: '💡 Feature Request' },
-              { id: 'issue', label: '🐛 Bug / Issue' },
-              { id: 'complaint', label: '⚠️ Complain' },
+              { id: 'feedback', label: '💡 General Feedback' },
+              { id: 'feature_request', label: '🚀 Feature Request' },
+              { id: 'issue', label: '⚠️ Technical Issue' },
+              { id: 'complaint', label: '📢 Complaint' },
             ].map((cat) => (
               <button
                 key={cat.id}

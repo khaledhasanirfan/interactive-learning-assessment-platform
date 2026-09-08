@@ -209,6 +209,21 @@ export const Repository = {
     } catch {
       // Ignore
     }
+    if (typeof window !== 'undefined') {
+      const local = localStorage.getItem('os_custom_quizzes');
+      if (local) {
+        try {
+          const list: Quiz[] = JSON.parse(local);
+          list.forEach(q => {
+            if (!mockStore.quizzes.some(mq => mq.id === q.id)) {
+              mockStore.quizzes.push(q);
+            }
+          });
+        } catch {
+          // ignore
+        }
+      }
+    }
     return courseId ? mockStore.quizzes.filter(qz => qz.courseId === courseId) : [...mockStore.quizzes];
   },
 
@@ -221,7 +236,8 @@ export const Repository = {
     } catch {
       // Ignore
     }
-    return mockStore.quizzes.find(qz => qz.id === quizId) || null;
+    const list = await this.getQuizzes();
+    return list.find(qz => qz.id === quizId) || null;
   },
 
   async saveQuiz(quiz: Quiz): Promise<Quiz> {
@@ -236,6 +252,9 @@ export const Repository = {
     } else {
       mockStore.quizzes.push(quiz);
     }
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('os_custom_quizzes', JSON.stringify(mockStore.quizzes));
+    }
     return quiz;
   },
 
@@ -249,6 +268,18 @@ export const Repository = {
     } catch {
       // Ignore
     }
+    if (typeof window !== 'undefined') {
+      const local = localStorage.getItem('os_custom_versions');
+      if (local) {
+        try {
+          const list: QuizVersion[] = JSON.parse(local);
+          const found = list.find(qv => qv.id === versionId);
+          if (found) return found;
+        } catch {
+          // ignore
+        }
+      }
+    }
     return mockStore.quizVersions.find(qv => qv.id === versionId) || null;
   },
 
@@ -259,6 +290,9 @@ export const Repository = {
       // Ignore
     }
     mockStore.quizVersions.push(version);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('os_custom_versions', JSON.stringify(mockStore.quizVersions));
+    }
     return version;
   },
 
@@ -272,7 +306,8 @@ export const Repository = {
     } catch {
       // Ignore
     }
-    return mockStore.attempts.filter(a => a.quizId === quizId);
+    const all = await this.getAllAttempts();
+    return all.filter(a => a.quizId === quizId);
   },
 
   async getAttemptsByUser(userId: string): Promise<Attempt[]> {
@@ -284,7 +319,8 @@ export const Repository = {
     } catch {
       // Ignore
     }
-    return mockStore.attempts.filter(a => a.userId === userId);
+    const all = await this.getAllAttempts();
+    return all.filter(a => a.userId === userId || a.userId === `demo-student-${userId.toLowerCase()}` || a.userEmail?.includes(userId));
   },
 
   async getAttemptById(attemptId: string): Promise<Attempt | null> {

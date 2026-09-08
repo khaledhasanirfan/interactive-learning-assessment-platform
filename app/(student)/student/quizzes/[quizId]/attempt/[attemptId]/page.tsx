@@ -79,8 +79,8 @@ export default function AssessmentAttemptPage({ params }: AttemptPageProps) {
         setVersion(qv);
         setQuestions(qv.questions);
 
-        const userId = profile?.id || '202014019';
-        const userEmail = profile?.email || 'student@mist.ac.bd';
+        const userId = profile?.email?.split('@')[0] || profile?.id || '202014019';
+        const userEmail = profile?.email || `${userId}@student.mist.ac.bd`;
         const userName = profile?.displayName || 'Student';
 
         let existingAttempt: Attempt | null = null;
@@ -89,6 +89,10 @@ export default function AssessmentAttemptPage({ params }: AttemptPageProps) {
         }
 
         if (!existingAttempt) {
+          const prevAttempts = await Repository.getAttemptsByUser(userId);
+          const quizAttempts = prevAttempts.filter(a => a.quizId === q.id);
+          const attemptNumber = quizAttempts.length + 1;
+
           const newAttempt: Attempt = {
             id: `att-${Date.now()}`,
             userId,
@@ -97,7 +101,7 @@ export default function AssessmentAttemptPage({ params }: AttemptPageProps) {
             courseId: q.courseId,
             quizId: q.id,
             quizVersionId: qv.id,
-            attemptNumber: 1,
+            attemptNumber,
             startedAt: new Date().toISOString(),
             status: 'in-progress',
             maxScore: qv.totalPoints,
