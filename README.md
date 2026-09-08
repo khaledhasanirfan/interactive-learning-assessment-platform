@@ -14,12 +14,13 @@
 
 | Resource | Link / Information |
 | :--- | :--- |
-| **Live Local Test Server** | [http://localhost:3000](http://localhost:3000) *(Running locally in production mode)* |
-| **GitHub Repository** | [https://github.com/khaledhasanirfan/interactive-learning-assessment-platform](https://github.com/khaledhasanirfan/interactive-learning-assessment-platform) |
-| **Target Course** | `CSE-307: Operating Systems` |
-| **Sample Enrollment Code** | `OS2026` |
-| **Default Instructor Account** | `Prof. Alan Turing` (`turing@university.edu`) |
-| **Default Student Accounts** | `Ada Lovelace` (`ada.lovelace@student.edu`), `Linus Torvalds` (`linus.torvalds@student.edu`) |
+| 🌐 **Live Public Hosted Link** | **[https://sizes-rangers-families-tan.trycloudflare.com](https://sizes-rangers-families-tan.trycloudflare.com)** *(Active on global Cloudflare edge)* |
+| 💻 **Live Local Test Server** | [http://localhost:3000](http://localhost:3000) |
+| 📦 **GitHub Repository** | [https://github.com/khaledhasanirfan/interactive-learning-assessment-platform](https://github.com/khaledhasanirfan/interactive-learning-assessment-platform) |
+| 🎓 **Target Course** | `CSE-307: Operating Systems` |
+| 🔑 **Sample Enrollment Code** | `OS2026` |
+| 👨‍🏫 **Default Instructor Account** | `Prof. Alan Turing` (`turing@university.edu`) |
+| 👩‍🎓 **Default Student Accounts** | `Ada Lovelace` (`ada.lovelace@student.edu`), `Linus Torvalds` (`linus.torvalds@student.edu`) |
 
 ---
 
