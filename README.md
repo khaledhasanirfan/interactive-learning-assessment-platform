@@ -14,7 +14,8 @@
 
 | Resource | Link / Information |
 | :--- | :--- |
-| 🌐 **Live Public Hosted Link** | **[https://sizes-rangers-families-tan.trycloudflare.com](https://sizes-rangers-families-tan.trycloudflare.com)** *(Active on global Cloudflare edge)* |
+| 🌐 **Live Hosted Platform (Primary)** | **[https://live-platform-os.vercel.app](https://live-platform-os.vercel.app)** *(Global Edge Deployment)* |
+| 🌐 **Live Hosted Platform (Mirror)** | **[https://live-platform-assessment.vercel.app](https://live-platform-assessment.vercel.app)** |
 | 💻 **Live Local Test Server** | [http://localhost:3000](http://localhost:3000) |
 | 📦 **GitHub Repository** | [https://github.com/khaledhasanirfan/interactive-learning-assessment-platform](https://github.com/khaledhasanirfan/interactive-learning-assessment-platform) |
 | 🎓 **Target Course** | `CSE-307: Operating Systems` |
