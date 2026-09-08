@@ -127,7 +127,7 @@ export default function QuizAttemptPage() {
       }
     }
     init();
-  }, [quizId, rawAttemptId, profile?.id]);
+  }, [quizId, rawAttemptId, profile?.id, profile?.displayName, profile?.email]);
 
   // Track response times on navigation
   const recordQuestionTime = () => {
