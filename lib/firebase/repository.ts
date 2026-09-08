@@ -41,71 +41,61 @@ export interface UserFeedback {
   status: 'new' | 'reviewed' | 'resolved';
 }
 
-// Local in-memory store for fallback/demo execution
+// Single active Live Class Task for Operating Systems
+const LIVE_CLASS_TASK_QUIZ: Quiz = {
+  id: 'live-class-task-os',
+  courseId: SEED_COURSE.id,
+  title: 'CSE-307 Live Class Task: Operating Systems Core Assessment',
+  description: 'Official live class assessment featuring Virtual Memory Paging, CPU Scheduling, and Kernel Synchronization.',
+  instructions: 'Answer all questions carefully. Text answers will be evaluated based on technical correctness and understanding.',
+  assignedSectionIds: [],
+  mode: 'assessment',
+  availableFrom: new Date(Date.now() - 3600 * 1000).toISOString(),
+  dueAt: new Date(Date.now() + 3600 * 1000 * 48).toISOString(),
+  timeLimitMinutes: 25,
+  maxAttempts: 2,
+  shuffleQuestions: false,
+  shuffleOptions: true,
+  immediateFeedback: true,
+  revealCorrectAnswer: true,
+  revealExplanation: true,
+  showScoreImmediately: true,
+  collectConfidence: true,
+  isPublished: true,
+  activeVersionId: 'ver-live-class-task-v1',
+  questionIds: ['q-bank-01', 'q-bank-02', 'q-bank-05', 'q-bank-06', 'q-bank-11'],
+  createdBy: 'khaled19',
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
+};
+
+const LIVE_CLASS_TASK_VERSION: QuizVersion = {
+  id: 'ver-live-class-task-v1',
+  quizId: 'live-class-task-os',
+  versionNumber: 1,
+  publishedAt: new Date().toISOString(),
+  publishedBy: 'khaled19',
+  questions: SEED_QUESTIONS.filter(q => LIVE_CLASS_TASK_QUIZ.questionIds.includes(q.id)),
+  totalPoints: 15,
+  mode: 'assessment',
+  timeLimitMinutes: 25,
+  collectConfidence: true,
+  immediateFeedback: true,
+  revealCorrectAnswer: true,
+  revealExplanation: true,
+  showScoreImmediately: true,
+};
+
+// Local in-memory store for fallback/manual testing execution
 const mockStore = {
-  students: [
-    {
-      id: 'stu-001',
-      studentId: 'STU-2026-001',
-      name: 'Ada Lovelace',
-      password: 'password123',
-      registeredAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-    },
-    {
-      id: 'stu-002',
-      studentId: 'STU-2026-002',
-      name: 'Linus Torvalds',
-      password: 'password123',
-      registeredAt: new Date(Date.now() - 86400000).toISOString(),
-    },
-  ] as RegisteredStudent[],
-  feedbacks: [
-    {
-      id: 'fb-001',
-      studentId: 'STU-2026-001',
-      studentName: 'Ada Lovelace',
-      category: 'feedback',
-      message: 'The Virtual Memory simulation was super helpful for understanding MMU offset bits!',
-      submittedAt: new Date(Date.now() - 3600000 * 4).toISOString(),
-      status: 'reviewed',
-    },
-    {
-      id: 'fb-002',
-      studentId: 'STU-2026-002',
-      category: 'feature_request',
-      studentName: 'Linus Torvalds',
-      message: 'Can we have a timeline chart for C-SCAN head reversal in the practice sandbox?',
-      submittedAt: new Date(Date.now() - 3600000 * 2).toISOString(),
-      status: 'new',
-    }
-  ] as UserFeedback[],
+  students: [] as RegisteredStudent[],
+  feedbacks: [] as UserFeedback[],
   courses: [SEED_COURSE] as Course[],
-  members: [
-    {
-      userId: 'demo-student-ada',
-      userEmail: 'ada.lovelace@student.edu',
-      userName: 'Ada Lovelace',
-      courseId: SEED_COURSE.id,
-      role: 'student' as const,
-      sectionId: 'sec-a',
-      enrolledAt: new Date().toISOString(),
-      status: 'active' as const,
-    },
-    {
-      userId: 'demo-student-linus',
-      userEmail: 'linus.torvalds@student.edu',
-      userName: 'Linus Torvalds',
-      courseId: SEED_COURSE.id,
-      role: 'student' as const,
-      sectionId: 'sec-b',
-      enrolledAt: new Date().toISOString(),
-      status: 'active' as const,
-    },
-  ] as CourseMember[],
-  quizzes: [SEED_QUIZ_ASSESSMENT, SEED_QUIZ_PRACTICE] as Quiz[],
-  quizVersions: [SEED_QUIZ_VERSION_ASSESSMENT, SEED_QUIZ_VERSION_PRACTICE] as QuizVersion[],
-  attempts: [...SEED_ATTEMPTS] as Attempt[],
-  responses: { ...SEED_RESPONSES } as Record<string, StudentResponse[]>,
+  members: [] as CourseMember[],
+  quizzes: [LIVE_CLASS_TASK_QUIZ] as Quiz[],
+  quizVersions: [LIVE_CLASS_TASK_VERSION] as QuizVersion[],
+  attempts: [] as Attempt[],
+  responses: {} as Record<string, StudentResponse[]>,
   banks: [
     {
       id: 'bank-master-os',
@@ -114,7 +104,7 @@ const mockStore = {
       description: 'Standard question bank with virtual memory and disk scheduling questions',
       tags: ['os', 'memory', 'disk'],
       questions: SEED_QUESTIONS,
-      createdBy: 'demo-instructor-turing',
+      createdBy: 'khaled19',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     }
@@ -321,6 +311,9 @@ export const Repository = {
     } else {
       mockStore.attempts.push(attempt);
     }
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('os_student_attempts', JSON.stringify(mockStore.attempts));
+    }
     return attempt;
   },
 
@@ -355,6 +348,10 @@ export const Repository = {
     return mockStore.responses[attemptId] || [];
   },
 
+  async getResponsesByAttempt(attemptId: string): Promise<StudentResponse[]> {
+    return this.getResponses(attemptId);
+  },
+
   // STUDENTS & AUTH
   async getRegisteredStudents(): Promise<RegisteredStudent[]> {
     try {
@@ -369,7 +366,14 @@ export const Repository = {
       const local = localStorage.getItem('os_registered_students');
       if (local) {
         try {
-          return JSON.parse(local);
+          const list: RegisteredStudent[] = JSON.parse(local);
+          const filtered = list.filter(s => 
+            s.name !== 'Ada Lovelace' && 
+            s.name !== 'Linus Torvalds' && 
+            s.studentId !== 'STU-2026-001' && 
+            s.studentId !== 'STU-2026-002'
+          );
+          return filtered;
         } catch {
           // fallback
         }
@@ -391,7 +395,13 @@ export const Repository = {
       mockStore.students.push(student);
     }
     if (typeof window !== 'undefined') {
-      localStorage.setItem('os_registered_students', JSON.stringify(mockStore.students));
+      const filtered = mockStore.students.filter(s => 
+        s.name !== 'Ada Lovelace' && 
+        s.name !== 'Linus Torvalds' && 
+        s.studentId !== 'STU-2026-001' && 
+        s.studentId !== 'STU-2026-002'
+      );
+      localStorage.setItem('os_registered_students', JSON.stringify(filtered));
     }
     return student;
   },
@@ -433,7 +443,14 @@ export const Repository = {
       const local = localStorage.getItem('os_feedbacks');
       if (local) {
         try {
-          return JSON.parse(local);
+          const list: UserFeedback[] = JSON.parse(local);
+          const filtered = list.filter(f => 
+            f.studentName !== 'Ada Lovelace' && 
+            f.studentName !== 'Linus Torvalds' && 
+            f.id !== 'fb-001' && 
+            f.id !== 'fb-002'
+          );
+          return filtered;
         } catch {
           // fallback
         }
@@ -457,10 +474,23 @@ export const Repository = {
     try {
       const snap = await getDocs(collection(db, 'attempts'));
       if (!snap.empty) {
-        return snap.docs.map(d => d.data() as Attempt);
+        return snap.docs
+          .map(d => d.data() as Attempt)
+          .filter(a => a.userId !== 'STU-2026-001' && a.userId !== 'STU-2026-002' && a.userId !== 'user-student-01' && a.userId !== 'user-student-02');
       }
     } catch {
       // Ignore
+    }
+    if (typeof window !== 'undefined') {
+      const local = localStorage.getItem('os_student_attempts');
+      if (local) {
+        try {
+          const list: Attempt[] = JSON.parse(local);
+          return list.filter(a => a.userId !== 'STU-2026-001' && a.userId !== 'STU-2026-002' && a.userId !== 'user-student-01' && a.userId !== 'user-student-02');
+        } catch {
+          // ignore
+        }
+      }
     }
     return [...mockStore.attempts];
   },

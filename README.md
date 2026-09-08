@@ -19,9 +19,9 @@
 | 💻 **Live Local Test Server** | [http://localhost:3000](http://localhost:3000) |
 | 📦 **GitHub Repository** | [https://github.com/khaledhasanirfan/interactive-learning-assessment-platform](https://github.com/khaledhasanirfan/interactive-learning-assessment-platform) |
 | 🔑 **Admin Credentials** | ID: `khaled19` \| Password: `hellotestingOS@12345` |
-| 👩‍🎓 **Student Access** | Instant Self-Registration (Enter Student ID & Password of choice) or Demo: ID `ada2026` / `linus2026` |
+| 👩‍🎓 **Student Access** | Instant Self-Registration (Format: `202X14XXX`, e.g. `202014019` where `2020`=Year, `14`=CSE Dept, `019`=Roll 1-199) |
 | 🎓 **Target Course** | `CSE-307: Operating Systems` |
-| 🔑 **Sample Course Enrollment Code** | `OS2026` |
+| 🔑 **Course Enrollment Code** | `OS2026` |
 
 ---
 
@@ -240,16 +240,14 @@ npm run lint
 
 ---
 
-## 👥 Demo Personas & Testing Accounts
+## 👥 Portal Roles & Authentication
+ 
+Access the platform via the unified portal at `/portal`:
 
-Use the built-in top-bar persona selector to switch roles instantly without logging in and out:
-
-| Persona | Role | Email | Capabilities & Workflows |
+| Role | Access | Credentials / Format | Capabilities & Workflows |
 | :--- | :--- | :--- | :--- |
-| **Prof. Alan Turing** | `instructor` | `turing@university.edu` | Course authoring, question bank JSON import, quiz version publishing, score analytics histograms, and pseudonymized CSV gradebook exporting. |
-| **Ada Lovelace** | `student` | `ada.lovelace@student.edu` | Course enrollment with code `OS2026`, assessment taking with background draft autosave, and interactive practice sandboxes. |
-| **Linus Torvalds** | `student` | `linus.torvalds@student.edu` | Alternative student profile for multi-student analytics and curve testing. |
-| **Dennis Ritchie** | `admin` | `admin@university.edu` | Platform administration, global audit logs, and institutional oversight. |
+| **Admin** | Protected | ID: `khaled19` \| Password: `hellotestingOS@12345` | Real-time command center: View live registered student roster, monitor platform traffic & submissions, review student feedbacks & issue complaints, and create/publish new quizzes and questions live. |
+| **Student** | Self-Registration | Format: `202X14XXX` (e.g. `202014019`) | Access assigned live class tasks, answer MCQs and technical short-answer questions with smart semantic grading, view detailed post-submission justifications, and submit direct feedback to Admin. |
 
 ---
 

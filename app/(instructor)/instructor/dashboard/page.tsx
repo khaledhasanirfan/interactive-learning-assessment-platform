@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/firebase/auth-context';
 import { Repository, RegisteredStudent, UserFeedback } from '@/lib/firebase/repository';
 import { Quiz, QuizVersion } from '@/lib/validations/quiz';
 import { Question } from '@/lib/validations/question';
+import { Attempt } from '@/lib/validations/attempt';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { 
@@ -22,7 +23,7 @@ import {
   Send,
   Eye,
   CheckCircle,
-  HelpCircle,
+  AlertCircle,
   ShieldCheck
 } from 'lucide-react';
 
@@ -33,12 +34,15 @@ export default function AdminDashboard() {
   const [students, setStudents] = useState<RegisteredStudent[]>([]);
   const [feedbacks, setFeedbacks] = useState<UserFeedback[]>([]);
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+  const [attempts, setAttempts] = useState<Attempt[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Active quiz creator state
   const [quizTitle, setQuizTitle] = useState('');
   const [quizTimeLimit, setQuizTimeLimit] = useState(20);
   const [activeTab, setActiveTab] = useState<'create' | 'feedbacks' | 'students'>('create');
+  const [publishStatus, setPublishStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [publishedSuccess, setPublishedSuccess] = useState('');
 
   // Form question builder
   const [questions, setQuestions] = useState<Array<{
@@ -71,18 +75,18 @@ export default function AdminDashboard() {
     }
   ]);
 
-  const [publishedSuccess, setPublishedSuccess] = useState('');
-
   const loadAllData = async () => {
     setLoading(false);
-    const [sList, fList, qList] = await Promise.all([
+    const [sList, fList, qList, aList] = await Promise.all([
       Repository.getRegisteredStudents(),
       Repository.getFeedbacks(),
       Repository.getQuizzes(),
+      Repository.getAllAttempts(),
     ]);
     setStudents(sList);
     setFeedbacks(fList);
     setQuizzes(qList);
+    setAttempts(aList);
   };
 
   useEffect(() => {
@@ -107,7 +111,7 @@ export default function AdminDashboard() {
         ...questions,
         {
           type: 'textual',
-          title: `Question ${questions.length + 1}`,
+          title: `Text Question ${questions.length + 1}`,
           prompt: '',
           points: 5,
           sampleAnswer: '',
@@ -134,7 +138,9 @@ export default function AdminDashboard() {
   const handlePublishQuiz = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!quizTitle.trim()) {
-      alert('Please enter a quiz title');
+      setPublishStatus('error');
+      setTimeout(() => setPublishStatus('idle'), 1500);
+      alert('Please enter an assessment title before publishing.');
       return;
     }
 
@@ -243,54 +249,58 @@ export default function AdminDashboard() {
     };
 
     await Repository.createAndPublishQuiz(newQuiz, newVersion);
-    setPublishedSuccess(`🎉 Successfully published "${quizTitle}" with ${formattedQuestions.length} questions! It is now live in students' dashboards.`);
+    setPublishStatus('success');
+    setPublishedSuccess(`🎉 Successfully published "${quizTitle}" with ${formattedQuestions.length} questions! Live in student dashboards.`);
     setQuizTitle('');
     loadAllData();
 
     setTimeout(() => {
+      setPublishStatus('idle');
       setPublishedSuccess('');
     }, 6000);
   };
 
   return (
-    <div className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-8 py-6 sm:py-8">
-      {/* Top Banner */}
-      <div className="bg-gradient-to-r from-sky-600 via-teal-600 to-emerald-600 rounded-3xl p-6 sm:p-8 text-white shadow-md mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="flex-1 w-full max-w-[1600px] mx-auto px-4 sm:px-8 xl:px-12 py-6 sm:py-8 space-y-8">
+      {/* Top Banner (Mint Gradient) */}
+      <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 rounded-3xl p-6 sm:p-8 text-white shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 text-xs font-bold mb-2">
-            <ShieldCheck className="w-4 h-4 text-emerald-200" />
+            <ShieldCheck className="w-4 h-4 text-emerald-100" />
             <span>Admin Command Center</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
             Welcome back, {profile?.displayName || 'Admin Khaled'}! 👋
           </h1>
-          <p className="text-xs sm:text-sm text-sky-100 mt-1 max-w-xl">
+          <p className="text-xs sm:text-sm text-emerald-100 mt-1 max-w-xl font-medium">
             Manage your registered students, live platform traffic, create & post new quizzes, and inspect student feedbacks.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <Link href="/student/dashboard">
-            <Button variant="outline" className="rounded-full bg-white text-slate-800 hover:bg-sky-50 font-bold text-xs border-white">
-              <Eye className="w-3.5 h-3.5 mr-1.5 text-sky-600" />
+            <Button variant="outline" className="rounded-full bg-white text-emerald-950 hover:bg-emerald-50 font-bold text-xs border-white shadow-xs">
+              <Eye className="w-3.5 h-3.5 mr-1.5 text-emerald-700" />
               Preview Student View
             </Button>
           </Link>
         </div>
       </div>
 
-      {/* Top 3 Metric Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-8">
+      {/* Top 3 Metric Cards (Clean DB numbers) */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
         {/* Card 1: Total Registered Students */}
         <div 
           onClick={() => setActiveTab('students')}
-          className="bg-white/90 backdrop-blur-md rounded-3xl border border-sky-100 p-6 shadow-sm hover:shadow-md transition-all cursor-pointer group"
+          className={`bg-white/95 backdrop-blur-md rounded-3xl border p-6 shadow-sm hover:shadow-md transition-all cursor-pointer group ${
+            activeTab === 'students' ? 'border-emerald-500 ring-2 ring-emerald-200' : 'border-emerald-100 hover:border-emerald-300'
+          }`}
         >
           <div className="flex items-center justify-between mb-3">
-            <div className="w-12 h-12 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center group-hover:scale-110 transition-transform">
               <Users className="w-6 h-6" />
             </div>
-            <span className="text-xs font-bold text-sky-600 bg-sky-50 px-2.5 py-1 rounded-full">
+            <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
               Live DB
             </span>
           </div>
@@ -301,7 +311,7 @@ export default function AdminDashboard() {
             <span className="text-3xl sm:text-4xl font-extrabold text-slate-900">
               {students.length}
             </span>
-            <span className="text-xs font-semibold text-emerald-600">Students Enrolled</span>
+            <span className="text-xs font-semibold text-emerald-700">Enrolled Students</span>
           </div>
           <p className="text-[11px] text-slate-400 mt-2">
             Click to view student IDs & roster
@@ -309,13 +319,13 @@ export default function AdminDashboard() {
         </div>
 
         {/* Card 2: Website Traffic & Live Activity */}
-        <div className="bg-white/90 backdrop-blur-md rounded-3xl border border-emerald-100 p-6 shadow-sm">
+        <div className="bg-white/95 backdrop-blur-md rounded-3xl border border-emerald-100 p-6 shadow-sm">
           <div className="flex items-center justify-between mb-3">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-2xl bg-teal-50 text-teal-700 flex items-center justify-center">
               <Activity className="w-6 h-6" />
             </div>
-            <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+            <span className="inline-flex items-center gap-1.5 text-xs font-bold text-teal-700 bg-teal-50 px-2.5 py-1 rounded-full border border-teal-200">
+              <span className="w-2 h-2 rounded-full bg-teal-500 animate-ping" />
               Active Online
             </span>
           </div>
@@ -324,25 +334,27 @@ export default function AdminDashboard() {
           </h3>
           <div className="flex items-baseline gap-2 mt-1">
             <span className="text-3xl sm:text-4xl font-extrabold text-slate-900">
-              {quizzes.length * 3 + 12}
+              {attempts.length}
             </span>
-            <span className="text-xs font-semibold text-sky-600">Submissions Processed</span>
+            <span className="text-xs font-semibold text-teal-700">Submissions Processed</span>
           </div>
           <p className="text-[11px] text-slate-400 mt-2">
-            Average completion rate: <span className="font-semibold text-slate-700">92%</span> &bull; 99.9% Uptime
+            Live assessment sessions submitted by students
           </p>
         </div>
 
         {/* Card 3: Feedbacks & Complaints */}
         <div 
           onClick={() => setActiveTab('feedbacks')}
-          className="bg-white/90 backdrop-blur-md rounded-3xl border border-teal-100 p-6 shadow-sm hover:shadow-md transition-all cursor-pointer group"
+          className={`bg-white/95 backdrop-blur-md rounded-3xl border p-6 shadow-sm hover:shadow-md transition-all cursor-pointer group ${
+            activeTab === 'feedbacks' ? 'border-emerald-500 ring-2 ring-emerald-200' : 'border-emerald-100 hover:border-emerald-300'
+          }`}
         >
           <div className="flex items-center justify-between mb-3">
-            <div className="w-12 h-12 rounded-2xl bg-teal-50 text-teal-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+            <div className="w-12 h-12 rounded-2xl bg-mint-100 text-emerald-800 flex items-center justify-center group-hover:scale-110 transition-transform">
               <MessageSquare className="w-6 h-6" />
             </div>
-            <span className="text-xs font-bold text-teal-600 bg-teal-50 px-2.5 py-1 rounded-full">
+            <span className="text-xs font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
               {feedbacks.length} Total
             </span>
           </div>
@@ -351,9 +363,9 @@ export default function AdminDashboard() {
           </h3>
           <div className="flex items-baseline gap-2 mt-1">
             <span className="text-3xl sm:text-4xl font-extrabold text-slate-900">
-              {feedbacks.filter(f => f.status === 'new').length}
+              {feedbacks.length}
             </span>
-            <span className="text-xs font-semibold text-amber-600">Needs Review</span>
+            <span className="text-xs font-semibold text-amber-700">Needs Review</span>
           </div>
           <p className="text-[11px] text-slate-400 mt-2">
             Click to read suggestions & issue reports
@@ -361,15 +373,15 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Tabs Navigation */}
-      <div className="flex items-center gap-2 border-b border-sky-100/80 mb-6 pb-2">
+      {/* Nav Tabs for Admin Views */}
+      <div className="flex flex-wrap items-center gap-2 border-b border-emerald-100/80 pb-3">
         <button
           type="button"
           onClick={() => setActiveTab('create')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+          className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 ${
             activeTab === 'create'
-              ? 'bg-gradient-to-r from-sky-600 to-teal-600 text-white shadow-xs'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              ? 'bg-emerald-600 text-white shadow-sm'
+              : 'bg-white/80 text-slate-600 hover:bg-emerald-50 hover:text-emerald-950 border border-emerald-100'
           }`}
         >
           <PlusCircle className="w-4 h-4" />
@@ -379,10 +391,10 @@ export default function AdminDashboard() {
         <button
           type="button"
           onClick={() => setActiveTab('feedbacks')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+          className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 ${
             activeTab === 'feedbacks'
-              ? 'bg-gradient-to-r from-sky-600 to-teal-600 text-white shadow-xs'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              ? 'bg-emerald-600 text-white shadow-sm'
+              : 'bg-white/80 text-slate-600 hover:bg-emerald-50 hover:text-emerald-950 border border-emerald-100'
           }`}
         >
           <MessageSquare className="w-4 h-4" />
@@ -392,10 +404,10 @@ export default function AdminDashboard() {
         <button
           type="button"
           onClick={() => setActiveTab('students')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+          className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 ${
             activeTab === 'students'
-              ? 'bg-gradient-to-r from-sky-600 to-teal-600 text-white shadow-xs'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              ? 'bg-emerald-600 text-white shadow-sm'
+              : 'bg-white/80 text-slate-600 hover:bg-emerald-50 hover:text-emerald-950 border border-emerald-100'
           }`}
         >
           <Users className="w-4 h-4" />
@@ -403,100 +415,111 @@ export default function AdminDashboard() {
         </button>
       </div>
 
-      {/* TAB 1: CREATE & POST QUIZ */}
+      {/* TAB 1: CREATE QUIZ / QUESTIONS */}
       {activeTab === 'create' && (
-        <div className="bg-white/95 backdrop-blur-md rounded-3xl border border-sky-100 p-6 sm:p-8 shadow-sm">
+        <div className="bg-white/95 backdrop-blur-md rounded-3xl border border-emerald-100 p-6 sm:p-8 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <div>
+              <h2 className="text-lg sm:text-xl font-bold text-slate-900">
+                Create & Assign Assessment
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Build MCQs, textual questions, and interactive hardware scenarios, then publish live to students.
+              </p>
+            </div>
+
+            {/* Add question type buttons */}
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                type="button"
+                onClick={() => addQuestion('mcq')}
+                variant="outline"
+                size="sm"
+                className="rounded-xl text-xs font-bold border-emerald-200 text-emerald-800 hover:bg-emerald-50"
+              >
+                + Add MCQ
+              </Button>
+              <Button
+                type="button"
+                onClick={() => addQuestion('textual')}
+                variant="outline"
+                size="sm"
+                className="rounded-xl text-xs font-bold border-teal-200 text-teal-800 hover:bg-teal-50"
+              >
+                + Add Textual
+              </Button>
+              <Button
+                type="button"
+                onClick={() => addQuestion('scenario')}
+                variant="outline"
+                size="sm"
+                className="rounded-xl text-xs font-bold border-emerald-300 text-emerald-900 hover:bg-emerald-50"
+              >
+                + Add Simulation
+              </Button>
+            </div>
+          </div>
+
           {publishedSuccess && (
-            <div className="mb-6 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-semibold flex items-center gap-2 shadow-xs">
+            <div className="mb-6 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-semibold flex items-center gap-2 animate-pop-success">
               <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0" />
               <span>{publishedSuccess}</span>
             </div>
           )}
 
-          <div className="mb-6">
-            <h2 className="text-lg sm:text-xl font-bold text-slate-900">
-              Create and Assign New OS Assessment
-            </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Author questions with multiple formats (MCQ, Textual Answer, or Interactive Simulation). Once published, students will see it instantly in their tasks.
-            </p>
-          </div>
-
           <form onSubmit={handlePublishQuiz} className="space-y-6">
-            {/* Title & Timing */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {/* Assessment Meta Fields */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-emerald-50/50 p-4 rounded-2xl border border-emerald-100">
               <div className="sm:col-span-2">
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Quiz / Task Title *
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                  Assessment Title
                 </label>
                 <Input
                   type="text"
                   value={quizTitle}
                   onChange={(e) => setQuizTitle(e.target.value)}
-                  placeholder="e.g. Quiz 3: Virtual Memory & Page Translation"
-                  className="rounded-xl border-slate-200 focus:border-sky-500 h-11 text-sm font-medium"
+                  placeholder="e.g. CSE-307 Midterm Assessment: CPU & Virtual Memory"
+                  className="rounded-xl border-emerald-200 bg-white text-sm"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
                   Time Limit (Minutes)
                 </label>
                 <Input
                   type="number"
-                  min={1}
-                  max={120}
                   value={quizTimeLimit}
                   onChange={(e) => setQuizTimeLimit(Number(e.target.value))}
-                  className="rounded-xl border-slate-200 focus:border-sky-500 h-11 text-sm"
+                  min={5}
+                  max={180}
+                  className="rounded-xl border-emerald-200 bg-white text-sm"
                 />
               </div>
             </div>
 
             {/* Questions List */}
-            <div className="space-y-4 pt-2">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                  Questions ({questions.length})
-                </span>
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    onClick={() => addQuestion('mcq')}
-                    size="sm"
-                    className="rounded-full bg-sky-50 text-sky-700 hover:bg-sky-100 border border-sky-200 text-xs font-bold"
-                  >
-                    + Add MCQ
-                  </Button>
-                  <Button
-                    type="button"
-                    onClick={() => addQuestion('textual')}
-                    size="sm"
-                    className="rounded-full bg-teal-50 text-teal-700 hover:bg-teal-100 border border-teal-200 text-xs font-bold"
-                  >
-                    + Add Textual Answer
-                  </Button>
-                  <Button
-                    type="button"
-                    onClick={() => addQuestion('scenario')}
-                    size="sm"
-                    className="rounded-full bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 text-xs font-bold"
-                  >
-                    + Add OS Scenario
-                  </Button>
-                </div>
-              </div>
-
+            <div className="space-y-4">
               {questions.map((q, idx) => (
-                <div key={idx} className="bg-slate-50/80 rounded-2xl border border-slate-200/80 p-4 sm:p-5 relative group">
-                  <div className="flex items-center justify-between mb-3">
+                <div 
+                  key={idx} 
+                  className="bg-slate-50/80 rounded-2xl border border-emerald-100/90 p-5 space-y-4 relative transition-all"
+                >
+                  {/* Question Header */}
+                  <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-full bg-slate-900 text-white text-xs font-bold flex items-center justify-center">
-                        {idx + 1}
+                      <span className="text-xs font-extrabold px-2.5 py-1 rounded-lg bg-emerald-600 text-white">
+                        #{idx + 1}
                       </span>
-                      <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-white border border-slate-200 text-slate-700">
-                        {q.type === 'mcq' ? 'Multiple Choice (MCQ)' : q.type === 'textual' ? 'Textual Answer' : 'Interactive OS Simulation'}
+                      <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
+                        q.type === 'mcq'
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : q.type === 'textual'
+                          ? 'bg-teal-100 text-teal-800'
+                          : 'bg-mint-200 text-emerald-950'
+                      }`}>
+                        {q.type === 'mcq' ? 'Multiple Choice' : q.type === 'textual' ? 'Textual Answer' : 'Interactive Simulation'}
                       </span>
                     </div>
 
@@ -531,7 +554,7 @@ export default function AdminDashboard() {
                             ? 'e.g. Explain how virtual addresses are translated to physical addresses by the MMU.'
                             : 'e.g. Solve the Paging Address Translation calculation for the given process.'
                         }
-                        className="rounded-xl border-slate-200 bg-white text-sm"
+                        className="rounded-xl border-emerald-200/80 bg-white text-sm"
                         required
                       />
                     </div>
@@ -544,7 +567,7 @@ export default function AdminDashboard() {
                         </label>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           {q.options.map((opt, oIdx) => (
-                            <div key={oIdx} className="flex items-center gap-2 bg-white p-2 rounded-xl border border-slate-200">
+                            <div key={oIdx} className="flex items-center gap-2 bg-white p-2 rounded-xl border border-emerald-100">
                               <input
                                 type="radio"
                                 name={`correct-${idx}`}
@@ -554,7 +577,7 @@ export default function AdminDashboard() {
                                   updated[idx]!.correctOptionIndex = oIdx;
                                   setQuestions(updated);
                                 }}
-                                className="w-4 h-4 text-sky-600 focus:ring-sky-500"
+                                className="w-4 h-4 text-emerald-600 focus:ring-emerald-500"
                               />
                               <input
                                 type="text"
@@ -589,7 +612,7 @@ export default function AdminDashboard() {
                           }}
                           placeholder="Provide the ideal textual answer or concepts students should include (e.g. VPN breakdown, Page Table lookup, Physical Frame assembly)..."
                           rows={2}
-                          className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-xs focus:border-teal-500 focus:ring-teal-500"
+                          className="w-full rounded-xl border border-emerald-200/80 bg-white p-2.5 text-xs focus:border-emerald-500 focus:ring-emerald-500"
                         />
                       </div>
                     )}
@@ -605,7 +628,7 @@ export default function AdminDashboard() {
                             updated[idx]!.scenarioType = e.target.value as 'paging' | 'disk';
                             setQuestions(updated);
                           }}
-                          className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700"
+                          className="rounded-xl border border-emerald-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700"
                         >
                           <option value="paging">Virtual Memory (Paging Address Translation)</option>
                           <option value="disk">Disk Scheduling (Cylinder Head Arm)</option>
@@ -617,15 +640,35 @@ export default function AdminDashboard() {
               ))}
             </div>
 
-            {/* Submit Button */}
-            <div className="pt-4 border-t border-slate-100 flex items-center justify-end">
+            {/* Submit Button with Animation */}
+            <div className="pt-4 border-t border-emerald-100 flex items-center justify-end">
               <Button
                 type="submit"
                 size="lg"
-                className="rounded-full bg-gradient-to-r from-sky-600 to-emerald-600 hover:from-sky-700 hover:to-emerald-700 text-white font-bold px-8 shadow-md hover:shadow-lg transition-all hover:scale-[1.02] flex items-center gap-2"
+                className={`rounded-full text-white font-bold px-8 shadow-md transition-all duration-300 flex items-center gap-2 ${
+                  publishStatus === 'success'
+                    ? 'bg-emerald-600 ring-4 ring-emerald-300 animate-pop-success'
+                    : publishStatus === 'error'
+                    ? 'bg-rose-600 ring-4 ring-rose-300 animate-shake-error'
+                    : 'bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 hover:scale-[1.02]'
+                }`}
               >
-                <Send className="w-4 h-4" />
-                <span>Publish to Students</span>
+                {publishStatus === 'success' ? (
+                  <>
+                    <CheckCircle2 className="w-5 h-5" />
+                    <span>Published Successfully!</span>
+                  </>
+                ) : publishStatus === 'error' ? (
+                  <>
+                    <AlertCircle className="w-5 h-5" />
+                    <span>Provide Title & Details</span>
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-4 h-4" />
+                    <span>Publish Assessment to Students</span>
+                  </>
+                )}
               </Button>
             </div>
           </form>
@@ -634,7 +677,7 @@ export default function AdminDashboard() {
 
       {/* TAB 2: FEEDBACKS & COMPLAINTS */}
       {activeTab === 'feedbacks' && (
-        <div className="bg-white/95 backdrop-blur-md rounded-3xl border border-sky-100 p-6 sm:p-8 shadow-sm">
+        <div className="bg-white/95 backdrop-blur-md rounded-3xl border border-emerald-100 p-6 sm:p-8 shadow-sm">
           <div className="mb-6">
             <h2 className="text-lg sm:text-xl font-bold text-slate-900">
               Student Feedbacks, Issues & Feature Requests
@@ -646,46 +689,36 @@ export default function AdminDashboard() {
 
           {feedbacks.length === 0 ? (
             <div className="text-center py-12 text-slate-400">
-              <MessageSquare className="w-12 h-12 mx-auto mb-3 opacity-30" />
-              <p className="text-sm font-semibold">No feedback submissions yet.</p>
-              <p className="text-xs">Students will be able to share their thoughts from their dashboard.</p>
+              <MessageSquare className="w-12 h-12 mx-auto mb-3 opacity-30 text-emerald-600" />
+              <p className="text-sm font-semibold text-slate-700">No feedback submissions yet.</p>
+              <p className="text-xs text-slate-500">When students submit feedback from their dashboard, it will appear here live.</p>
             </div>
           ) : (
             <div className="space-y-3">
               {feedbacks.map((fb) => (
-                <div key={fb.id} className="bg-slate-50 rounded-2xl border border-slate-200/80 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div key={fb.id} className="bg-slate-50 rounded-2xl border border-emerald-100 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
                         fb.category === 'issue' || fb.category === 'complaint'
                           ? 'bg-rose-100 text-rose-700'
                           : fb.category === 'feature_request'
-                          ? 'bg-sky-100 text-sky-700'
-                          : 'bg-emerald-100 text-emerald-700'
+                          ? 'bg-teal-100 text-teal-800'
+                          : 'bg-emerald-100 text-emerald-800'
                       }`}>
                         {fb.category.replace('_', ' ')}
                       </span>
                       <span className="text-xs font-bold text-slate-800">
                         {fb.studentName} ({fb.studentId})
                       </span>
-                      <span className="text-[11px] text-slate-400">
-                        &bull; {new Date(fb.submittedAt).toLocaleString()}
-                      </span>
                     </div>
-                    <p className="text-sm text-slate-700 font-medium pt-1">
+                    <p className="text-xs sm:text-sm text-slate-700 font-medium">
                       &ldquo;{fb.message}&rdquo;
                     </p>
                   </div>
-
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className={`text-xs px-2.5 py-1 rounded-full font-semibold ${
-                      fb.status === 'resolved' 
-                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
-                        : 'bg-amber-50 text-amber-700 border border-amber-200'
-                    }`}>
-                      {fb.status === 'resolved' ? 'Resolved ✔' : 'Pending Review'}
-                    </span>
-                  </div>
+                  <span className="text-[11px] text-slate-400 shrink-0">
+                    {new Date(fb.submittedAt).toLocaleDateString()}
+                  </span>
                 </div>
               ))}
             </div>
@@ -695,7 +728,7 @@ export default function AdminDashboard() {
 
       {/* TAB 3: REGISTERED STUDENTS */}
       {activeTab === 'students' && (
-        <div className="bg-white/95 backdrop-blur-md rounded-3xl border border-sky-100 p-6 sm:p-8 shadow-sm">
+        <div className="bg-white/95 backdrop-blur-md rounded-3xl border border-emerald-100 p-6 sm:p-8 shadow-sm">
           <div className="mb-6">
             <h2 className="text-lg sm:text-xl font-bold text-slate-900">
               Registered Students Roster
@@ -705,33 +738,47 @@ export default function AdminDashboard() {
             </p>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-slate-200 text-slate-500 text-xs uppercase tracking-wider">
-                  <th className="pb-3 font-semibold">Student ID</th>
-                  <th className="pb-3 font-semibold">Name</th>
-                  <th className="pb-3 font-semibold">Registration Date</th>
-                  <th className="pb-3 font-semibold">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 font-medium">
-                {students.map((stu) => (
-                  <tr key={stu.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="py-3.5 font-mono text-xs text-sky-700 font-bold">{stu.studentId}</td>
-                    <td className="py-3.5 text-slate-900 font-semibold">{stu.name}</td>
-                    <td className="py-3.5 text-xs text-slate-500">{new Date(stu.registeredAt).toLocaleDateString()}</td>
-                    <td className="py-3.5">
-                      <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                        Active
-                      </span>
-                    </td>
+          {students.length === 0 ? (
+            <div className="text-center py-12 text-slate-400">
+              <Users className="w-12 h-12 mx-auto mb-3 opacity-30 text-emerald-600" />
+              <p className="text-sm font-semibold text-slate-700">No registered students yet.</p>
+              <p className="text-xs text-slate-500">Students can create an account on the portal page using their Student ID (e.g. 202014019).</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-emerald-100 text-slate-400 font-bold uppercase tracking-wider">
+                    <th className="py-3 px-4">Student ID</th>
+                    <th className="py-3 px-4">Name</th>
+                    <th className="py-3 px-4">Registration Date</th>
+                    <th className="py-3 px-4">Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {students.map((s) => (
+                    <tr key={s.id} className="hover:bg-emerald-50/40 transition-colors">
+                      <td className="py-3.5 px-4 font-mono font-bold text-emerald-700">
+                        {s.studentId}
+                      </td>
+                      <td className="py-3.5 px-4 font-semibold text-slate-900">
+                        {s.name}
+                      </td>
+                      <td className="py-3.5 px-4 text-slate-500">
+                        {new Date(s.registeredAt).toLocaleDateString()}
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                          Active
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
     </div>

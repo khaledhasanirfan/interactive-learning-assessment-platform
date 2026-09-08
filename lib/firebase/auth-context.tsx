@@ -30,19 +30,12 @@ export const DEMO_PERSONAS: Record<string, DemoUser> = {
     role: 'admin',
     institution: 'Department of Computer Science',
   },
-  student1: {
-    id: 'demo-student-ada',
-    email: 'STU-2026-001@student.os',
-    displayName: 'Ada Lovelace',
+  student: {
+    id: 'student-202014019',
+    email: '202014019@student.mist.ac.bd',
+    displayName: 'Khaled Hasan',
     role: 'student',
-    institution: 'Department of Computer Science',
-  },
-  student2: {
-    id: 'demo-student-linus',
-    email: 'STU-2026-002@student.os',
-    displayName: 'Linus Torvalds',
-    role: 'student',
-    institution: 'Department of Computer Science',
+    institution: 'MIST CSE',
   },
 };
 
@@ -79,15 +72,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
     // Default to student persona for gentle landing
-    return {
-      id: DEMO_PERSONAS.student1.id,
-      email: DEMO_PERSONAS.student1.email,
-      displayName: DEMO_PERSONAS.student1.displayName,
-      role: 'student',
-      institution: DEMO_PERSONAS.student1.institution,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+    if (DEMO_PERSONAS.student) {
+      return {
+        id: DEMO_PERSONAS.student.id,
+        email: DEMO_PERSONAS.student.email,
+        displayName: DEMO_PERSONAS.student.displayName,
+        role: 'student',
+        institution: DEMO_PERSONAS.student.institution,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+    }
+    return null;
   });
   const [loading, setLoading] = useState(false);
 

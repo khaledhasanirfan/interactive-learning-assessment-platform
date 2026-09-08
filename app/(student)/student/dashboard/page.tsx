@@ -16,11 +16,11 @@ import {
   Sparkles, 
   MessageSquare, 
   Send, 
-  CheckCircle,
-  HelpCircle,
-  BookOpen,
-  History,
-  Award
+  CheckCircle, 
+  BookOpen, 
+  History, 
+  Award,
+  AlertCircle
 } from 'lucide-react';
 
 export default function StudentDashboard() {
@@ -34,6 +34,7 @@ export default function StudentDashboard() {
   const [feedbackMsg, setFeedbackMsg] = useState('');
   const [feedbackSubmitting, setFeedbackSubmitting] = useState(false);
   const [feedbackSuccess, setFeedbackSuccess] = useState('');
+  const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
   useEffect(() => {
     async function loadData() {
@@ -55,12 +56,16 @@ export default function StudentDashboard() {
 
   const handleFeedbackSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!feedbackMsg.trim()) return;
+    if (!feedbackMsg.trim()) {
+      setSubmitStatus('error');
+      setTimeout(() => setSubmitStatus('idle'), 1500);
+      return;
+    }
 
     setFeedbackSubmitting(true);
     const feedbackItem: UserFeedback = {
       id: `fb-${Date.now()}`,
-      studentId: profile?.email?.split('@')[0] || profile?.id || 'STU-2026',
+      studentId: profile?.email?.split('@')[0] || profile?.id || '202014019',
       studentName: profile?.displayName || 'Student',
       category: feedbackCategory,
       message: feedbackMsg.trim(),
@@ -71,9 +76,11 @@ export default function StudentDashboard() {
     await Repository.submitFeedback(feedbackItem);
     setFeedbackSubmitting(false);
     setFeedbackMsg('');
-    setFeedbackSuccess('✨ Thank you! Your feedback has been sent directly to the Admin.');
+    setSubmitStatus('success');
+    setFeedbackSuccess('✨ Thank you! Your feedback has been transmitted directly to Admin Khaled.');
 
     setTimeout(() => {
+      setSubmitStatus('idle');
       setFeedbackSuccess('');
     }, 5000);
   };
@@ -84,23 +91,23 @@ export default function StudentDashboard() {
   const completedAttempts = attempts.filter(a => a.status === 'submitted' || a.status === 'timed-out');
 
   return (
-    <div className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-8 py-6 sm:py-8 space-y-8">
-      {/* Student Welcome Card */}
-      <div className="bg-gradient-to-r from-sky-500 via-teal-500 to-emerald-500 rounded-3xl p-6 sm:p-8 text-white shadow-md relative overflow-hidden flex flex-col sm:flex-row items-center justify-between gap-6">
+    <div className="flex-1 w-full max-w-[1600px] mx-auto px-4 sm:px-8 xl:px-12 py-6 sm:py-8 space-y-8">
+      {/* Student Welcome Card (Mint Theme) */}
+      <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 rounded-3xl p-6 sm:p-8 text-white shadow-md relative overflow-hidden flex flex-col sm:flex-row items-center justify-between gap-6">
         <div className="z-10 space-y-2 text-center sm:text-left">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 text-xs font-bold">
             <span>👋 Hello, {profile?.displayName || 'Student'}</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-            Ready to Ace Operating Systems? 🚀
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight">
+            Ready to Master Operating Systems? 🚀
           </h1>
-          <p className="text-xs sm:text-sm text-sky-100 max-w-md">
-            Complete your assigned quizzes, review past performance, or launch hands-on simulations below.
+          <p className="text-xs sm:text-sm text-emerald-100 max-w-lg font-medium">
+            Complete your assigned live class tasks, review detailed justifications of past answers, or submit direct feedback below.
           </p>
         </div>
 
         {/* Mascot Mini Buddy */}
-        <div className="w-24 h-24 sm:w-28 sm:h-28 relative rounded-2xl bg-white/10 p-2 border border-white/30 backdrop-blur-xs flex items-center justify-center shrink-0">
+        <div className="w-24 h-24 sm:w-28 sm:h-28 relative rounded-2xl bg-white/10 p-2 border border-white/30 backdrop-blur-xs flex items-center justify-center shrink-0 animate-buddy-float">
           <Image
             src="/images/buddy-avatar.png"
             alt="KernelBuddy"
@@ -116,56 +123,56 @@ export default function StudentDashboard() {
       <div>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <span className="p-2 rounded-xl bg-sky-50 text-sky-600">
+            <span className="p-2 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200">
               <BookOpen className="w-5 h-5" />
             </span>
             <div>
               <h2 className="text-lg sm:text-xl font-bold text-slate-900">
-                Active Quizzes & Tasks
+                Active Assigned Quizzes &amp; Tasks
               </h2>
-              <p className="text-xs text-slate-500">Assigned by your instructor for CSE-307</p>
+              <p className="text-xs text-slate-500">Live assessments assigned for your class</p>
             </div>
           </div>
-          <span className="text-xs font-bold px-3 py-1 rounded-full bg-sky-50 text-sky-700 border border-sky-200">
+          <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
             {activeQuizzes.length} Available
           </span>
         </div>
 
         {activeQuizzes.length === 0 ? (
-          <div className="bg-white/80 rounded-3xl border border-sky-100 p-8 text-center text-slate-500 shadow-xs">
+          <div className="bg-white/90 rounded-3xl border border-emerald-100 p-8 text-center text-slate-500 shadow-xs">
             <CheckCircle className="w-10 h-10 text-emerald-500 mx-auto mb-2 opacity-80" />
             <h3 className="text-sm font-bold text-slate-800">You&apos;re all caught up!</h3>
-            <p className="text-xs text-slate-400 mt-1">No active quizzes pending at this moment. Check past sessions below.</p>
+            <p className="text-xs text-slate-400 mt-1">No pending quizzes at this moment. Review your completed sessions below.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {activeQuizzes.map((quiz) => (
               <div 
                 key={quiz.id}
-                className="bg-white/95 backdrop-blur-md rounded-3xl border border-sky-100 p-6 shadow-sm hover:shadow-md transition-all hover:scale-[1.01] flex flex-col justify-between"
+                className="bg-white/95 backdrop-blur-md rounded-3xl border border-emerald-100 p-6 shadow-sm hover:shadow-md hover:border-emerald-300 transition-all hover:scale-[1.01] flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      Active Assessment
+                    <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
+                      Live Class Task
                     </span>
                     <span className="flex items-center gap-1 text-xs font-semibold text-slate-500">
-                      <Clock className="w-3.5 h-3.5 text-sky-500" />
-                      {quiz.timeLimitMinutes || 20} mins
+                      <Clock className="w-3.5 h-3.5 text-emerald-600" />
+                      {quiz.timeLimitMinutes || 25} mins
                     </span>
                   </div>
 
-                  <h3 className="text-base font-bold text-slate-900 mb-1 leading-snug">
+                  <h3 className="text-base font-bold text-slate-900 mb-1.5 leading-snug">
                     {quiz.title}
                   </h3>
-                  <p className="text-xs text-slate-500 line-clamp-2 mb-4">
-                    {quiz.description || 'Master key Operating Systems mechanisms with interactive and textual questions.'}
+                  <p className="text-xs text-slate-500 line-clamp-2 mb-4 leading-relaxed">
+                    {quiz.description || 'Master key Operating Systems mechanisms with interactive, textual, and MCQ questions.'}
                   </p>
                 </div>
 
                 <Link href={`/student/quizzes/${quiz.id}/attempt/new`}>
                   <Button 
-                    className="w-full rounded-full bg-gradient-to-r from-sky-600 to-emerald-600 hover:from-sky-700 hover:to-emerald-700 text-white font-bold text-xs sm:text-sm py-2.5 shadow-sm transition-all flex items-center justify-center gap-2 group"
+                    className="w-full rounded-full bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-xs sm:text-sm py-2.5 shadow-sm transition-all flex items-center justify-center gap-2 group"
                   >
                     <span>Start Assessment</span>
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -181,31 +188,31 @@ export default function StudentDashboard() {
       <div>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <span className="p-2 rounded-xl bg-teal-50 text-teal-600">
+            <span className="p-2 rounded-xl bg-teal-50 text-teal-700 border border-teal-200">
               <History className="w-5 h-5" />
             </span>
             <div>
               <h2 className="text-lg sm:text-xl font-bold text-slate-900">
-                Past Sessions & History
+                Completed Assessment Sessions
               </h2>
-              <p className="text-xs text-slate-500">Review your past scores and submissions</p>
+              <p className="text-xs text-slate-500">Your historical score records and performance</p>
             </div>
           </div>
-          <span className="text-xs font-bold px-3 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+          <span className="text-xs font-bold px-3 py-1 rounded-full bg-teal-50 text-teal-800 border border-teal-200">
             {completedAttempts.length} Completed
           </span>
         </div>
 
         {completedAttempts.length === 0 ? (
-          <div className="bg-white/80 rounded-3xl border border-slate-200/80 p-6 text-center text-slate-500 shadow-xs">
+          <div className="bg-white/80 rounded-3xl border border-emerald-100/80 p-6 text-center text-slate-500 shadow-xs">
             <p className="text-xs">No completed sessions yet. Start an active quiz above to build your progress history!</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {completedAttempts.map((att) => (
               <div 
                 key={att.id}
-                className="bg-white/95 rounded-3xl border border-slate-200 p-5 shadow-xs flex items-center justify-between"
+                className="bg-white/95 rounded-3xl border border-emerald-100 p-5 shadow-xs flex items-center justify-between hover:border-emerald-200 transition-all"
               >
                 <div>
                   <div className="flex items-center gap-2 mb-1">
@@ -221,10 +228,10 @@ export default function StudentDashboard() {
                 </div>
 
                 <div className="text-right">
-                  <div className="text-lg font-extrabold text-slate-900">
+                  <div className="text-lg font-extrabold text-emerald-800">
                     {att.percentage !== undefined ? `${Math.round(att.percentage)}%` : (att.score !== undefined ? `${att.score}/${att.maxScore}` : 'Graded')}
                   </div>
-                  <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                  <span className="text-[10px] font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
                     Recorded
                   </span>
                 </div>
@@ -234,10 +241,10 @@ export default function StudentDashboard() {
         )}
       </div>
 
-      {/* SECTION 3: DEDICATED PERSISTENT FEEDBACK & COMPLAINT BOX */}
-      <div className="bg-gradient-to-br from-sky-50 via-teal-50/40 to-emerald-50/50 rounded-3xl border border-sky-200/80 p-6 sm:p-8 shadow-sm">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="w-10 h-10 rounded-2xl bg-white shadow-xs border border-sky-100 flex items-center justify-center text-sky-600">
+      {/* SECTION 3: DEDICATED PERSISTENT FEEDBACK / COMPLAIN INPUT */}
+      <div className="bg-white/95 backdrop-blur-md rounded-3xl border border-emerald-200/90 p-6 sm:p-8 shadow-sm">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700">
             <MessageSquare className="w-5 h-5" />
           </div>
           <div>
@@ -245,13 +252,13 @@ export default function StudentDashboard() {
               Help Us Improve KernelBuddy 💡
             </h2>
             <p className="text-xs text-slate-500">
-              Share your user experience, complaints, issues you are facing, or features you want. Submissions go straight to the Admin!
+              Share your user experience, complaints, issues you are facing, or features you want. Submissions go straight to Admin Khaled!
             </p>
           </div>
         </div>
 
         {feedbackSuccess && (
-          <div className="mb-4 p-3 rounded-2xl bg-emerald-100/80 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2 shadow-xs">
+          <div className="mb-4 p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2 shadow-xs animate-pop-success">
             <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
             <span>{feedbackSuccess}</span>
           </div>
@@ -272,8 +279,8 @@ export default function StudentDashboard() {
                 onClick={() => setFeedbackCategory(cat.id as any)}
                 className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all border ${
                   feedbackCategory === cat.id
-                    ? 'bg-sky-600 text-white border-sky-600 shadow-xs'
-                    : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                    : 'bg-white text-slate-600 border-emerald-100 hover:bg-emerald-50'
                 }`}
               >
                 {cat.label}
@@ -289,19 +296,41 @@ export default function StudentDashboard() {
               placeholder="Type your feedback, complain, or requested feature here..."
               rows={3}
               required
-              className="w-full rounded-2xl border border-sky-200 bg-white p-3.5 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:border-sky-500 focus:ring-sky-500 shadow-xs resize-none"
+              className="w-full rounded-2xl border border-emerald-200/90 bg-white p-3.5 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:border-emerald-500 focus:ring-emerald-500 shadow-xs resize-none"
             />
           </div>
 
-          {/* Submit Button */}
+          {/* Submit Button with animated states */}
           <div className="flex justify-end">
             <Button
               type="submit"
               disabled={feedbackSubmitting || !feedbackMsg.trim()}
-              className="rounded-full bg-gradient-to-r from-sky-600 to-teal-600 hover:from-sky-700 hover:to-teal-700 text-white font-bold text-xs px-6 py-2 shadow-xs flex items-center gap-1.5 transition-all hover:scale-[1.02]"
+              className={`rounded-full text-white font-bold text-xs px-7 py-2.5 shadow-xs flex items-center gap-1.5 transition-all duration-300 ${
+                submitStatus === 'success'
+                  ? 'bg-emerald-600 ring-4 ring-emerald-300 animate-pop-success'
+                  : submitStatus === 'error'
+                  ? 'bg-rose-600 ring-4 ring-rose-300 animate-shake-error'
+                  : 'bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 hover:scale-[1.02]'
+              }`}
             >
-              <span>{feedbackSubmitting ? 'Sending...' : 'Submit to Admin'}</span>
-              <Send className="w-3.5 h-3.5" />
+              {feedbackSubmitting ? (
+                <span>Sending...</span>
+              ) : submitStatus === 'success' ? (
+                <>
+                  <CheckCircle className="w-4 h-4" />
+                  <span>Submitted Successfully!</span>
+                </>
+              ) : submitStatus === 'error' ? (
+                <>
+                  <AlertCircle className="w-4 h-4" />
+                  <span>Enter a Message</span>
+                </>
+              ) : (
+                <>
+                  <span>Submit to Admin</span>
+                  <Send className="w-3.5 h-3.5" />
+                </>
+              )}
             </Button>
           </div>
         </form>

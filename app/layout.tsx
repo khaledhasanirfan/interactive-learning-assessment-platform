@@ -1,7 +1,16 @@
 import type { Metadata } from 'next';
+import { DM_Sans } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/lib/firebase/auth-context';
 import { Navbar } from '@/components/layout/Navbar';
+import { KernelBuddyCompanion } from '@/components/mascot/KernelBuddyCompanion';
+
+const dmSans = DM_Sans({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700', '800'],
+  variable: '--font-dm-sans',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: 'KernelBuddy — Interactive OS Learning Platform',
@@ -19,24 +28,25 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="h-full">
+    <html lang="en" className={`h-full ${dmSans.variable}`}>
       <head>
         <link rel="icon" href="/icon.svg" type="image/svg+xml" />
       </head>
-      <body className="min-h-full flex flex-col bg-gradient-to-b from-sky-50/60 via-slate-50 to-emerald-50/40 text-slate-900 font-sans antialiased selection:bg-sky-200 selection:text-sky-900">
+      <body className="min-h-full flex flex-col mint-animated-bg text-slate-900 antialiased selection:bg-emerald-200 selection:text-emerald-950">
         <AuthProvider>
           <Navbar />
-          <main className="flex-1 flex flex-col">
+          <main className="flex-1 flex flex-col w-full">
             {children}
           </main>
-          <footer className="bg-white/80 backdrop-blur-xs border-t border-sky-100/60 py-4 text-center text-xs text-slate-500">
-            <div className="w-full px-4 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-2">
-              <p className="flex items-center gap-1.5 font-medium text-slate-600">
+          <KernelBuddyCompanion />
+          <footer className="bg-white/85 backdrop-blur-md border-t border-emerald-100 py-4 text-center text-xs text-slate-600">
+            <div className="w-full px-4 sm:px-8 xl:px-12 flex flex-col sm:flex-row items-center justify-between gap-2">
+              <p className="flex items-center gap-1.5 font-bold text-emerald-800">
                 <span>⚡</span>
                 <span>KernelBuddy &bull; CSE-307 Operating Systems</span>
               </p>
-              <p className="text-slate-400">
-                Designed for Interactive Learning &bull; University Assessment Platform
+              <p className="text-slate-500 font-medium">
+                Mint Interactive Learning &bull; University Assessment Platform
               </p>
             </div>
           </footer>
@@ -45,3 +55,4 @@ export default function RootLayout({
     </html>
   );
 }
+

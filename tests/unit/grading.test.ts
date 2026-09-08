@@ -30,7 +30,7 @@ describe('Authoritative Question Grading Engine', () => {
       shuffleOptions: true,
     };
 
-    expect(evaluateQuestionAnswer(q, 'opt2')).toEqual({
+    expect(evaluateQuestionAnswer(q, 'opt2')).toMatchObject({
       questionId: 'q1',
       isCorrect: true,
       pointsEarned: 2,
@@ -110,6 +110,30 @@ describe('Authoritative Question Grading Engine', () => {
     expect(evaluateQuestionAnswer(q, 'mmu').isCorrect).toBe(true);
     expect(evaluateQuestionAnswer(q, '  Memory Management Unit  ').isCorrect).toBe(true);
     expect(evaluateQuestionAnswer(q, 'ALU').isCorrect).toBe(false);
+  });
+
+  it('evaluates textual answer with smart semantic scoring and fractional credit', () => {
+    const q: ShortTextQuestion = {
+      id: 'q-text-smart',
+      type: 'short-text',
+      title: 'Context Switching Definition',
+      prompt: 'Explain what happens during a CPU context switch.',
+      difficulty: 'medium',
+      tags: ['cpu'],
+      topic: 'Process Management',
+      points: 3,
+      explanation: 'Saves the state of the active process into its PCB and restores the state of the newly scheduled process.',
+      acceptedAnswers: ['Saves current process state to PCB and restores next process state from PCB'],
+      caseSensitive: false,
+      trimWhitespace: true,
+    };
+
+    const partialAnswer = 'It saves the registers and state of the running process to the PCB and restores the next process.';
+    const res = evaluateQuestionAnswer(q, partialAnswer);
+    expect(res.pointsEarned).toBeGreaterThanOrEqual(2.0);
+    expect(res.maxPoints).toBe(3);
+    expect(res.justification).toBeDefined();
+    expect(res.modelAnswer).toBeDefined();
   });
 
   it('grades Scenario question using plugin registry', () => {
