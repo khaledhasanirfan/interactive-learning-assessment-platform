@@ -40,13 +40,9 @@ export default function RootLayout({
           </main>
           <KernelBuddyCompanion />
           <footer className="bg-white/85 backdrop-blur-md border-t border-emerald-100 py-4 text-center text-xs text-slate-600">
-            <div className="w-full px-4 sm:px-8 xl:px-12 flex flex-col sm:flex-row items-center justify-between gap-2">
-              <p className="flex items-center gap-1.5 font-bold text-emerald-800">
-                <span>⚡</span>
-                <span>KernelBuddy &bull; CSE-307 Operating Systems</span>
-              </p>
-              <p className="text-slate-500 font-medium">
-                Mint Interactive Learning &bull; University Assessment Platform
+            <div className="w-full px-4 flex items-center justify-center text-center">
+              <p className="font-semibold text-emerald-900/90 text-xs sm:text-sm">
+                designed and developed by <span className="font-bold text-emerald-700">@khaledirfan</span>. all rights reserved 2026 copyright
               </p>
             </div>
           </footer>
