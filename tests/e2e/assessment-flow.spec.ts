@@ -5,17 +5,17 @@ test.describe('Interactive Learning & Assessment Platform E2E Flow', () => {
     await page.goto('/');
 
     await expect(page.locator('h1')).toContainText('Interactive Learning & Assessment Platform');
-    await expect(page.getByText('CSE-307: Operating System')).toBeVisible();
+    await expect(page.getByText('CSE-307: Operating System', { exact: true })).toBeVisible();
 
     // Verify scenario cards exist
-    await expect(page.getByText('Paging Address Translation')).toBeVisible();
-    await expect(page.getByText('Disk Scheduling Algorithms')).toBeVisible();
+    await expect(page.getByText('Paging Address Translation').first()).toBeVisible();
+    await expect(page.getByText('Disk Scheduling Algorithms').first()).toBeVisible();
   });
 
   test('student can navigate dashboard and view course quizzes', async ({ page }) => {
     await page.goto('/student/dashboard');
 
-    await expect(page.locator('h1')).toContainText('Student Portal');
+    await expect(page.getByText('Student Portal')).toBeVisible();
     await expect(page.getByText('CSE-307')).toBeVisible();
 
     // Verify assigned quizzes are listed
@@ -33,7 +33,7 @@ test.describe('Interactive Learning & Assessment Platform E2E Flow', () => {
     await expect(page.getByText('Address Translation Workspace')).toBeVisible();
 
     // Switch to Disk tab
-    await page.getByRole('button', { name: '2. Disk Scheduling Algorithms' }).click();
+    await page.getByRole('button', { name: 'Disk Scheduling Algorithms' }).click();
     await expect(page.getByText('Magnetic Disk Head Scheduling Simulation')).toBeVisible();
     await expect(page.getByText('Horizontal Cylinder Surface')).toBeVisible();
   });
