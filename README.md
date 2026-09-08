@@ -18,10 +18,10 @@
 | 🌐 **Live Hosted Platform (Mirror)** | **[https://live-platform-assessment.vercel.app](https://live-platform-assessment.vercel.app)** |
 | 💻 **Live Local Test Server** | [http://localhost:3000](http://localhost:3000) |
 | 📦 **GitHub Repository** | [https://github.com/khaledhasanirfan/interactive-learning-assessment-platform](https://github.com/khaledhasanirfan/interactive-learning-assessment-platform) |
+| 🔑 **Admin Credentials** | ID: `khaled19` \| Password: `hellotestingOS@12345` |
+| 👩‍🎓 **Student Access** | Instant Self-Registration (Enter Student ID & Password of choice) or Demo: ID `ada2026` / `linus2026` |
 | 🎓 **Target Course** | `CSE-307: Operating Systems` |
-| 🔑 **Sample Enrollment Code** | `OS2026` |
-| 👨‍🏫 **Default Instructor Account** | `Prof. Alan Turing` (`turing@university.edu`) |
-| 👩‍🎓 **Default Student Accounts** | `Ada Lovelace` (`ada.lovelace@student.edu`), `Linus Torvalds` (`linus.torvalds@student.edu`) |
+| 🔑 **Sample Course Enrollment Code** | `OS2026` |
 
 ---
 

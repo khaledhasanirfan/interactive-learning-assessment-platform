@@ -65,7 +65,7 @@ export default function QuizAttemptPage() {
         if (!foundQuiz) return;
         setQuiz(foundQuiz);
 
-        const targetVerId = foundQuiz.activeVersionId || 'ver-quiz-vm-v1';
+        const targetVerId = (foundQuiz as any).publishedVersionId || foundQuiz.activeVersionId || 'ver-quiz-vm-v1';
         let foundVer = await Repository.getQuizVersion(quizId, targetVerId);
         if (!foundVer) {
           // Fallback if not published yet

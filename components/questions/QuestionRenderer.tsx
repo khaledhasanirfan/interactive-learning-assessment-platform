@@ -51,10 +51,12 @@ export function QuestionRenderer({
       {/* Question Header & Meta */}
       <div className="flex flex-wrap items-center justify-between gap-2 pb-2">
         <div className="flex items-center gap-2">
-          <Badge variant={difficultyVariants[question.difficulty] || 'default'}>
-            {question.difficulty.toUpperCase()}
-          </Badge>
-          <Badge variant="default">{question.topic}</Badge>
+          {question.difficulty && (
+            <Badge variant={difficultyVariants[question.difficulty] || 'default'}>
+              {question.difficulty.toUpperCase()}
+            </Badge>
+          )}
+          {question.topic && <Badge variant="default">{question.topic}</Badge>}
           {question.subtopic && <Badge variant="info">{question.subtopic}</Badge>}
         </div>
         <div className="text-xs font-semibold text-slate-500">
@@ -228,20 +230,20 @@ export function QuestionRenderer({
           </div>
         )}
 
-        {/* 5. Short Text Answer */}
+        {/* 5. Short / Textual Answer */}
         {question.type === 'short-text' && (
-          <div className="max-w-md space-y-2">
-            <input
-              type="text"
+          <div className="w-full max-w-xl space-y-2">
+            <textarea
+              rows={3}
               disabled={isReadOnly}
-              placeholder="Type your answer here..."
+              placeholder="Type your textual answer / explanation here..."
               value={answer ?? ''}
               onChange={(e) => onChange(e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:outline-none"
+              className="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-hidden resize-y"
             />
-            {showSolution && (
+            {showSolution && question.acceptedAnswers && (
               <p className="text-xs text-emerald-700 font-medium">
-                Accepted answers: {question.acceptedAnswers.join(', ')}
+                Accepted / Model Answer: {question.acceptedAnswers.join(', ')}
               </p>
             )}
           </div>

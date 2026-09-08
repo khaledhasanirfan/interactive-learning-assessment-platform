@@ -12,6 +12,7 @@ import {
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from './client';
 import { UserProfile, UserRole } from '@/lib/validations/user';
+import { Repository } from './repository';
 
 export interface DemoUser {
   id: string;
@@ -22,33 +23,26 @@ export interface DemoUser {
 }
 
 export const DEMO_PERSONAS: Record<string, DemoUser> = {
-  instructor: {
-    id: 'demo-instructor-turing',
-    email: 'turing@university.edu',
-    displayName: 'Prof. Alan Turing',
-    role: 'instructor',
+  admin: {
+    id: 'admin-khaled19',
+    email: 'khaled19@admin.os',
+    displayName: 'Khaled (Admin)',
+    role: 'admin',
     institution: 'Department of Computer Science',
   },
   student1: {
     id: 'demo-student-ada',
-    email: 'ada.lovelace@student.edu',
+    email: 'STU-2026-001@student.os',
     displayName: 'Ada Lovelace',
     role: 'student',
     institution: 'Department of Computer Science',
   },
   student2: {
     id: 'demo-student-linus',
-    email: 'linus.torvalds@student.edu',
+    email: 'STU-2026-002@student.os',
     displayName: 'Linus Torvalds',
     role: 'student',
     institution: 'Department of Computer Science',
-  },
-  admin: {
-    id: 'demo-admin-ritchie',
-    email: 'admin@university.edu',
-    displayName: 'Dennis Ritchie (Admin)',
-    role: 'admin',
-    institution: 'System Administration',
   },
 };
 
@@ -62,6 +56,9 @@ interface AuthContextType {
   isStudent: boolean;
   signInWithEmail: (email: string, pass: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
+  loginAdmin: (id: string, pass: string) => boolean;
+  loginStudent: (studentId: string, pass: string) => Promise<{ success: boolean; error?: string }>;
+  signupStudent: (name: string, studentId: string, pass: string) => Promise<{ success: boolean; error?: string }>;
   switchDemoPersona: (personaKey: keyof typeof DEMO_PERSONAS) => void;
   signOut: () => Promise<void>;
 }
@@ -72,7 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('demo_profile');
+      const saved = localStorage.getItem('os_active_profile');
       if (saved) {
         try {
           return JSON.parse(saved);
@@ -81,13 +78,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
     }
-    // Default to instructor persona for development overview
+    // Default to student persona for gentle landing
     return {
-      id: DEMO_PERSONAS.instructor.id,
-      email: DEMO_PERSONAS.instructor.email,
-      displayName: DEMO_PERSONAS.instructor.displayName,
-      role: 'instructor',
-      institution: DEMO_PERSONAS.instructor.institution,
+      id: DEMO_PERSONAS.student1.id,
+      email: DEMO_PERSONAS.student1.email,
+      displayName: DEMO_PERSONAS.student1.displayName,
+      role: 'student',
+      institution: DEMO_PERSONAS.student1.institution,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -104,30 +101,100 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (userSnap.exists()) {
             const data = userSnap.data() as UserProfile;
             setProfile(data);
-          } else {
-            // Create student profile by default
-            const newProfile: UserProfile = {
-              id: firebaseUser.uid,
-              email: firebaseUser.email || '',
-              displayName: firebaseUser.displayName || 'Student',
-              role: 'student',
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            };
-            await setDoc(userDocRef, newProfile);
-            setProfile(newProfile);
           }
         } catch {
-          // If Firestore is offline or local emulator not started, retain active profile
+          // fallback
         }
       } else {
-        // If not authenticated via Firebase, check if demo mode is enabled
         setUser(null);
       }
     });
 
     return () => unsubscribe();
   }, []);
+
+  const loginAdmin = (id: string, pass: string): boolean => {
+    if (id.trim() === 'khaled19' && pass === 'hellotestingOS@12345') {
+      const adminProfile: UserProfile = {
+        id: 'admin-khaled19',
+        email: 'khaled19@admin.os',
+        displayName: 'Khaled (Admin)',
+        role: 'admin',
+        institution: 'Operating Systems Department',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      setProfile(adminProfile);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('os_active_profile', JSON.stringify(adminProfile));
+      }
+      return true;
+    }
+    return false;
+  };
+
+  const loginStudent = async (studentId: string, pass: string): Promise<{ success: boolean; error?: string }> => {
+    setLoading(true);
+    try {
+      const student = await Repository.validateStudentLogin(studentId, pass);
+      if (!student) {
+        return { success: false, error: 'Invalid Student ID or password. Please check your credentials or create an account.' };
+      }
+      const studentProfile: UserProfile = {
+        id: student.id,
+        email: `${student.studentId}@student.os`,
+        displayName: student.name,
+        role: 'student',
+        institution: 'Computer Science & Engineering',
+        createdAt: student.registeredAt,
+        updatedAt: new Date().toISOString(),
+      };
+      setProfile(studentProfile);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('os_active_profile', JSON.stringify(studentProfile));
+      }
+      return { success: true };
+    } catch {
+      return { success: false, error: 'Authentication error. Please try again.' };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const signupStudent = async (name: string, studentId: string, pass: string): Promise<{ success: boolean; error?: string }> => {
+    setLoading(true);
+    try {
+      const existing = await Repository.validateStudentLogin(studentId);
+      if (existing) {
+        return { success: false, error: 'Student ID already registered. Please log in directly.' };
+      }
+      const newStudent = await Repository.registerStudent({
+        id: `stu-${Date.now()}`,
+        studentId: studentId.trim(),
+        name: name.trim(),
+        password: pass,
+        registeredAt: new Date().toISOString(),
+      });
+      const studentProfile: UserProfile = {
+        id: newStudent.id,
+        email: `${newStudent.studentId}@student.os`,
+        displayName: newStudent.name,
+        role: 'student',
+        institution: 'Computer Science & Engineering',
+        createdAt: newStudent.registeredAt,
+        updatedAt: new Date().toISOString(),
+      };
+      setProfile(studentProfile);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('os_active_profile', JSON.stringify(studentProfile));
+      }
+      return { success: true };
+    } catch {
+      return { success: false, error: 'Registration failed. Please try again.' };
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const switchDemoPersona = (personaKey: keyof typeof DEMO_PERSONAS) => {
     const persona = DEMO_PERSONAS[personaKey];
@@ -143,7 +210,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       };
       setProfile(newProfile);
       if (typeof window !== 'undefined') {
-        localStorage.setItem('demo_profile', JSON.stringify(newProfile));
+        localStorage.setItem('os_active_profile', JSON.stringify(newProfile));
       }
     }
   };
@@ -170,9 +237,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     setLoading(true);
     try {
-      await firebaseSignOut(auth);
-      // Reset to student demo persona on sign out
-      switchDemoPersona('student1');
+      if (auth.currentUser) {
+        await firebaseSignOut(auth);
+      }
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('os_active_profile');
+      }
+      // Reset to guest student
+      setProfile({
+        id: 'guest',
+        email: '',
+        displayName: 'Guest Student',
+        role: 'student',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
     } finally {
       setLoading(false);
     }
@@ -195,6 +274,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isStudent,
         signInWithEmail,
         signInWithGoogle,
+        loginAdmin,
+        loginStudent,
+        signupStudent,
         switchDemoPersona,
         signOut,
       }}

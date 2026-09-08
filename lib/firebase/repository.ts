@@ -23,8 +23,62 @@ import {
   SEED_RESPONSES 
 } from '@/lib/seed/seed-data';
 
+export interface RegisteredStudent {
+  id: string;
+  studentId: string;
+  name: string;
+  password?: string;
+  registeredAt: string;
+}
+
+export interface UserFeedback {
+  id: string;
+  studentId: string;
+  studentName: string;
+  category: 'issue' | 'feedback' | 'complaint' | 'feature_request';
+  message: string;
+  submittedAt: string;
+  status: 'new' | 'reviewed' | 'resolved';
+}
+
 // Local in-memory store for fallback/demo execution
 const mockStore = {
+  students: [
+    {
+      id: 'stu-001',
+      studentId: 'STU-2026-001',
+      name: 'Ada Lovelace',
+      password: 'password123',
+      registeredAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+    },
+    {
+      id: 'stu-002',
+      studentId: 'STU-2026-002',
+      name: 'Linus Torvalds',
+      password: 'password123',
+      registeredAt: new Date(Date.now() - 86400000).toISOString(),
+    },
+  ] as RegisteredStudent[],
+  feedbacks: [
+    {
+      id: 'fb-001',
+      studentId: 'STU-2026-001',
+      studentName: 'Ada Lovelace',
+      category: 'feedback',
+      message: 'The Virtual Memory simulation was super helpful for understanding MMU offset bits!',
+      submittedAt: new Date(Date.now() - 3600000 * 4).toISOString(),
+      status: 'reviewed',
+    },
+    {
+      id: 'fb-002',
+      studentId: 'STU-2026-002',
+      category: 'feature_request',
+      studentName: 'Linus Torvalds',
+      message: 'Can we have a timeline chart for C-SCAN head reversal in the practice sandbox?',
+      submittedAt: new Date(Date.now() - 3600000 * 2).toISOString(),
+      status: 'new',
+    }
+  ] as UserFeedback[],
   courses: [SEED_COURSE] as Course[],
   members: [
     {
@@ -300,4 +354,119 @@ export const Repository = {
     }
     return mockStore.responses[attemptId] || [];
   },
+
+  // STUDENTS & AUTH
+  async getRegisteredStudents(): Promise<RegisteredStudent[]> {
+    try {
+      const snap = await getDocs(collection(db, 'students'));
+      if (!snap.empty) {
+        return snap.docs.map(d => d.data() as RegisteredStudent);
+      }
+    } catch {
+      // Ignore
+    }
+    if (typeof window !== 'undefined') {
+      const local = localStorage.getItem('os_registered_students');
+      if (local) {
+        try {
+          return JSON.parse(local);
+        } catch {
+          // fallback
+        }
+      }
+    }
+    return [...mockStore.students];
+  },
+
+  async registerStudent(student: RegisteredStudent): Promise<RegisteredStudent> {
+    try {
+      await setDoc(doc(db, 'students', student.studentId), student);
+    } catch {
+      // Ignore
+    }
+    const idx = mockStore.students.findIndex(s => s.studentId === student.studentId);
+    if (idx >= 0) {
+      mockStore.students[idx] = student;
+    } else {
+      mockStore.students.push(student);
+    }
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('os_registered_students', JSON.stringify(mockStore.students));
+    }
+    return student;
+  },
+
+  async validateStudentLogin(studentId: string, password?: string): Promise<RegisteredStudent | null> {
+    const list = await this.getRegisteredStudents();
+    const found = list.find(s => s.studentId.trim().toLowerCase() === studentId.trim().toLowerCase());
+    if (!found) return null;
+    if (password && found.password && found.password !== password) {
+      return null;
+    }
+    return found;
+  },
+
+  // FEEDBACKS & COMPLAINTS
+  async submitFeedback(feedback: UserFeedback): Promise<UserFeedback> {
+    try {
+      await setDoc(doc(db, 'feedbacks', feedback.id), feedback);
+    } catch {
+      // Ignore
+    }
+    mockStore.feedbacks.unshift(feedback);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('os_feedbacks', JSON.stringify(mockStore.feedbacks));
+    }
+    return feedback;
+  },
+
+  async getFeedbacks(): Promise<UserFeedback[]> {
+    try {
+      const snap = await getDocs(collection(db, 'feedbacks'));
+      if (!snap.empty) {
+        return snap.docs.map(d => d.data() as UserFeedback);
+      }
+    } catch {
+      // Ignore
+    }
+    if (typeof window !== 'undefined') {
+      const local = localStorage.getItem('os_feedbacks');
+      if (local) {
+        try {
+          return JSON.parse(local);
+        } catch {
+          // fallback
+        }
+      }
+    }
+    return [...mockStore.feedbacks];
+  },
+
+  // QUIZ & QUESTION CREATION FOR ADMIN
+  async createAndPublishQuiz(quiz: Quiz, version: QuizVersion): Promise<{ quiz: Quiz; version: QuizVersion }> {
+    await this.saveQuiz(quiz);
+    await this.publishQuizVersion(quiz.id, version);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('os_custom_quizzes', JSON.stringify(mockStore.quizzes));
+      localStorage.setItem('os_custom_versions', JSON.stringify(mockStore.quizVersions));
+    }
+    return { quiz, version };
+  },
+
+  async getAllAttempts(): Promise<Attempt[]> {
+    try {
+      const snap = await getDocs(collection(db, 'attempts'));
+      if (!snap.empty) {
+        return snap.docs.map(d => d.data() as Attempt);
+      }
+    } catch {
+      // Ignore
+    }
+    return [...mockStore.attempts];
+  },
+
+  async getStudentAttempts(studentId: string): Promise<Attempt[]> {
+    const all = await this.getAllAttempts();
+    return all.filter(a => a.userId === studentId || a.userId === `demo-student-${studentId.toLowerCase()}`);
+  }
 };

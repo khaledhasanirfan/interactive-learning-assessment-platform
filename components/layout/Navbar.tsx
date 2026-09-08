@@ -2,49 +2,41 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useAuth, DEMO_PERSONAS } from '@/lib/firebase/auth-context';
+import Image from 'next/image';
+import { usePathname, useRouter } from 'next/navigation';
+import { useAuth } from '@/lib/firebase/auth-context';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { 
-  GraduationCap, 
-  BookOpen, 
-  Layers, 
-  BarChart3, 
-  Settings, 
-  UserCheck, 
-  LogOut,
-  Sparkles
-} from 'lucide-react';
+import { LogOut, LayoutDashboard, Sparkles, User, ShieldCheck } from 'lucide-react';
 
 export function Navbar() {
   const pathname = usePathname();
-  const { profile, role, isInstructor, switchDemoPersona, signOut } = useAuth();
+  const router = useRouter();
+  const { profile, isAdmin, isStudent, signOut } = useAuth();
 
-  const isQuizActive = pathname?.includes('/attempt/');
+  const isExamRunning = pathname?.includes('/attempt/');
 
-  // In active exam/attempt mode, render distraction-free header
-  if (isQuizActive) {
+  // In active assessment mode, render distraction-free header
+  if (isExamRunning) {
     return (
-      <header className="sticky top-0 z-40 bg-white border-b border-slate-200 px-6 py-3.5 shadow-xs">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
+      <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-sky-100 px-4 sm:px-8 py-3 shadow-xs">
+        <div className="w-full flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-600 text-white rounded-lg">
-              <GraduationCap className="h-5 w-5" />
+            <div className="w-9 h-9 relative rounded-xl overflow-hidden shadow-xs ring-1 ring-sky-200">
+              <Image src="/logo.svg" alt="KernelBuddy" width={36} height={36} className="object-contain" priority />
             </div>
             <div>
-              <span className="text-xs font-semibold text-blue-600 uppercase tracking-wider">
-                CSE-307: Operating System
+              <span className="text-xs font-semibold text-sky-600 uppercase tracking-wider block">
+                CSE-307: Operating Systems
               </span>
               <h1 className="text-sm font-bold text-slate-900 leading-tight">
-                Secure Assessment Session
+                Live Assessment Session
               </h1>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <Badge variant="warning">Assessment in Progress</Badge>
-            <span className="text-xs font-mono text-slate-500 hidden sm:inline">
-              Autosave Active
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              Autosaving Answers
             </span>
           </div>
         </div>
@@ -52,156 +44,104 @@ export function Navbar() {
     );
   }
 
+  const handleLogout = async () => {
+    await signOut();
+    router.push('/portal');
+  };
+
+  const isPortal = pathname === '/portal';
+
   return (
-    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-xs border-b border-slate-200 shadow-xs">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo & Main Title */}
-          <div className="flex items-center gap-6">
-            <Link href="/" className="flex items-center gap-2.5">
-              <div className="p-2 bg-blue-600 text-white rounded-xl shadow-xs">
-                <GraduationCap className="h-5 w-5" />
-              </div>
-              <div>
-                <span className="text-xs font-semibold text-blue-600 block leading-none">
-                  Interactive Assessment
-                </span>
-                <span className="text-sm font-bold text-slate-900 leading-none mt-1 block">
-                  CS Learning Platform
-                </span>
-              </div>
-            </Link>
-
-            {/* Role-based navigation */}
-            <nav className="hidden md:flex items-center gap-1 text-sm font-medium">
-              {isInstructor ? (
-                <>
-                  <Link
-                    href="/instructor/dashboard"
-                    className={`px-3 py-1.5 rounded-lg transition-colors ${
-                      pathname === '/instructor/dashboard'
-                        ? 'bg-slate-100 text-slate-900 font-semibold'
-                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                    }`}
-                  >
-                    Dashboard
-                  </Link>
-                  <Link
-                    href="/instructor/courses"
-                    className={`px-3 py-1.5 rounded-lg transition-colors ${
-                      pathname.startsWith('/instructor/courses')
-                        ? 'bg-slate-100 text-slate-900 font-semibold'
-                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                    }`}
-                  >
-                    Courses
-                  </Link>
-                  <Link
-                    href="/instructor/banks"
-                    className={`px-3 py-1.5 rounded-lg transition-colors ${
-                      pathname.startsWith('/instructor/banks')
-                        ? 'bg-slate-100 text-slate-900 font-semibold'
-                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                    }`}
-                  >
-                    Question Banks
-                  </Link>
-                  <Link
-                    href="/instructor/quizzes"
-                    className={`px-3 py-1.5 rounded-lg transition-colors ${
-                      pathname.startsWith('/instructor/quizzes')
-                        ? 'bg-slate-100 text-slate-900 font-semibold'
-                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                    }`}
-                  >
-                    Quizzes
-                  </Link>
-                  <Link
-                    href="/instructor/scenarios"
-                    className={`px-3 py-1.5 rounded-lg transition-colors ${
-                      pathname.startsWith('/instructor/scenarios')
-                        ? 'bg-slate-100 text-slate-900 font-semibold'
-                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                    }`}
-                  >
-                    Scenario Engine
-                  </Link>
-                </>
-              ) : (
-                <>
-                  <Link
-                    href="/student/dashboard"
-                    className={`px-3 py-1.5 rounded-lg transition-colors ${
-                      pathname === '/student/dashboard'
-                        ? 'bg-slate-100 text-slate-900 font-semibold'
-                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                    }`}
-                  >
-                    My Courses & Quizzes
-                  </Link>
-                  <Link
-                    href="/student/practice"
-                    className={`px-3 py-1.5 rounded-lg transition-colors ${
-                      pathname === '/student/practice'
-                        ? 'bg-slate-100 text-slate-900 font-semibold'
-                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                    }`}
-                  >
-                    Interactive Practice
-                  </Link>
-                </>
-              )}
-            </nav>
+    <header className="sticky top-0 z-40 w-full bg-white/90 backdrop-blur-md border-b border-sky-100 shadow-xs">
+      <div className="w-full px-4 sm:px-8 flex items-center justify-between h-16">
+        {/* Brand & Logo (Stretched Left) */}
+        <Link href="/" className="flex items-center gap-3 group transition-transform hover:scale-[1.01]">
+          <div className="w-10 h-10 relative rounded-2xl p-1 bg-gradient-to-br from-sky-400 to-emerald-400 shadow-sm flex items-center justify-center">
+            <Image 
+              src="/logo.svg" 
+              alt="KernelBuddy Logo" 
+              width={34} 
+              height={34} 
+              className="object-contain drop-shadow-xs" 
+              priority
+            />
           </div>
-
-          {/* User Controls & Demo Switcher */}
-          <div className="flex items-center gap-3">
-            {/* Demo Persona Switcher */}
-            <div className="hidden lg:flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs">
-              <span className="text-[11px] text-slate-500 font-medium px-2 flex items-center gap-1">
-                <Sparkles className="h-3 w-3 text-amber-500" /> Switch Role:
+          <div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-base font-extrabold bg-gradient-to-r from-sky-700 via-teal-700 to-emerald-600 bg-clip-text text-transparent">
+                KernelBuddy
               </span>
-              <button
-                onClick={() => switchDemoPersona('instructor')}
-                className={`px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer ${
-                  role === 'instructor' ? 'bg-white shadow-xs text-blue-700 font-bold' : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                Instructor
-              </button>
-              <button
-                onClick={() => switchDemoPersona('student1')}
-                className={`px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer ${
-                  role === 'student' ? 'bg-white shadow-xs text-blue-700 font-bold' : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                Student (Ada)
-              </button>
-              <button
-                onClick={() => switchDemoPersona('admin')}
-                className={`px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer ${
-                  role === 'admin' ? 'bg-white shadow-xs text-blue-700 font-bold' : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                Admin
-              </button>
+              <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-sky-50 text-sky-600 border border-sky-200/60 hidden sm:inline-block">
+                OS EdTech
+              </span>
             </div>
-
-            {/* Profile Pill */}
-            <div className="flex items-center gap-2 pl-2 border-l border-slate-200">
-              <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 font-bold text-xs flex items-center justify-center border border-blue-200">
-                {profile?.displayName?.charAt(0) || 'U'}
-              </div>
-              <div className="hidden sm:block text-left">
-                <div className="text-xs font-semibold text-slate-900 leading-tight">
-                  {profile?.displayName || 'Demo User'}
-                </div>
-                <div className="text-[10px] text-slate-500 capitalize">
-                  {role} Account
-                </div>
-              </div>
-            </div>
+            <span className="text-[11px] font-medium text-slate-500 block leading-tight">
+              Interactive OS Platform
+            </span>
           </div>
+        </Link>
+
+        {/* Action Controls (Stretched Right) */}
+        <div className="flex items-center gap-3">
+          {profile && profile.id !== 'guest' ? (
+            <>
+              {isAdmin ? (
+                <div className="flex items-center gap-2">
+                  <Link href="/instructor/dashboard">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="rounded-full bg-sky-50 text-sky-700 border-sky-200 hover:bg-sky-100 flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5"
+                    >
+                      <LayoutDashboard className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">Admin Dashboard</span>
+                    </Button>
+                  </Link>
+                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                    <ShieldCheck className="w-3.5 h-3.5 text-sky-600" />
+                    <span className="max-w-[110px] truncate">{profile.displayName}</span>
+                  </span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Link href="/student/dashboard">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="rounded-full bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5"
+                    >
+                      <LayoutDashboard className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">My Tasks</span>
+                    </Button>
+                  </Link>
+                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                    <User className="w-3.5 h-3.5 text-emerald-600" />
+                    <span className="max-w-[120px] truncate">{profile.displayName}</span>
+                  </span>
+                </div>
+              )}
+
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleLogout}
+                className="rounded-full text-slate-500 hover:text-rose-600 hover:bg-rose-50 p-2 text-xs"
+                title="Log Out"
+              >
+                <LogOut className="w-4 h-4" />
+                <span className="sr-only">Log Out</span>
+              </Button>
+            </>
+          ) : (
+            !isPortal && (
+              <Link href="/portal">
+                <Button className="rounded-full bg-gradient-to-r from-sky-600 to-emerald-600 hover:from-sky-700 hover:to-emerald-700 text-white font-medium text-xs sm:text-sm px-5 py-2 shadow-sm transition-all hover:shadow-md hover:scale-[1.02]">
+                  <span>Sign In</span>
+                  <Sparkles className="w-3.5 h-3.5 ml-1.5" />
+                </Button>
+              </Link>
+            )
+          )}
         </div>
       </div>
     </header>
